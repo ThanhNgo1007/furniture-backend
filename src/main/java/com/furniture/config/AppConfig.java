@@ -14,6 +14,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import java.util.Collections;
 import java.util.List;
 
 @Configuration
@@ -27,8 +28,8 @@ public class AppConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/products/*/reviews").permitAll()
                         .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/api/products/*/reviews").permitAll()
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(new JwtTokenValidator(), BasicAuthenticationFilter.class)
@@ -43,11 +44,11 @@ public class AppConfig {
             @Override
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                 CorsConfiguration cfg = new CorsConfiguration();
-                cfg.setAllowedOrigins(List.of("*"));
-                cfg.setAllowedMethods(List.of("*"));
-                cfg.setAllowedHeaders(List.of("*"));
+                cfg.setAllowedOrigins(Collections.singletonList("http://localhost:5173"));
+                cfg.setAllowedMethods(Collections.singletonList("*"));
+                cfg.setAllowedHeaders(Collections.singletonList("*"));
                 cfg.setAllowCredentials(true);
-                cfg.setExposedHeaders(List.of("Authorization"));
+                cfg.setExposedHeaders(Collections.singletonList("Authorization"));
                 cfg.setMaxAge(3600L);
                 return cfg;
             }
