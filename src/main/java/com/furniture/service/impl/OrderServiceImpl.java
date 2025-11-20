@@ -33,7 +33,7 @@ public class OrderServiceImpl implements OrderService {
         //brand 2 => 3 Beds
         //brand 3 => 1 Lamps & light fixtures
 
-        Map<Long, List<CartItem>> itemsBySeller = cart.getCartItems().stream()
+        Map<Long, List<CartItem>> itemsBySeller = cart.getCartItemsInBag().stream()
                 .collect(Collectors.groupingBy(item->item.getProduct().getSeller().getId()));
         Set<Order> orders = new HashSet<>();
 

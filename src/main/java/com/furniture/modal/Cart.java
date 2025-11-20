@@ -22,7 +22,7 @@ public class Cart {
 
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<CartItem> cartItems = new HashSet<>();
+    private Set<CartItem> cartItemsInBag = new HashSet<>();
 
     private double totalSellingPrice;
 
