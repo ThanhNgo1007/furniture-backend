@@ -13,8 +13,5 @@ import lombok.NoArgsConstructor;
 public class PaymentDetails {
     private String paymentId;
     private String paymentLinkId;
-    private String paymentLinkRefernceId;
-    private String paymentLinkStatus;
-    private String paymentIdZWSP;
     private PaymentStatus status;
 }

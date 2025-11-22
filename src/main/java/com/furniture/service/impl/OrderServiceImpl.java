@@ -7,6 +7,7 @@ import com.furniture.repository.AddressRepository;
 import com.furniture.repository.OrderItemRepository;
 import com.furniture.repository.OrderRepository;
 import com.furniture.service.OrderService;
+import com.furniture.utils.VNPayUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -55,6 +56,7 @@ public class OrderServiceImpl implements OrderService {
             createdOrder.setShippingAddress(address);
             createdOrder.setOrderStatus(OrderStatus.PENDING);
             createdOrder.getPaymentDetails().setStatus(PaymentStatus.PENDING);
+            createdOrder.setOrderId("ORD-" + VNPayUtil.getRandomNumber(6));
 
             Order savedOrder = orderRepository.save(createdOrder);
             orders.add(savedOrder);

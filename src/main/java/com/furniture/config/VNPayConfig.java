@@ -31,7 +31,4 @@ public class VNPayConfig {
 
     @Value("${app.currency.default:VND}")
     private String defaultCurrency;
-
-    @Value("${app.currency.exchange.rate.usd.to.vnd:25000}")
-    private Double usdToVndRate;
 }

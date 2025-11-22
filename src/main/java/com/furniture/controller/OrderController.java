@@ -25,83 +25,47 @@ public class OrderController {
     private final SellerReportService sellerReportService;
     private final PaymentService paymentService;
 
-//    @PostMapping()
-//    public ResponseEntity<PaymentLinkResponse> createOrderHandler(
-//            @RequestBody Address shippingAddress,
-//            @RequestParam PaymentMethod paymentMethod,
-//            @RequestHeader("Authorization") String jwt
-//    ) throws Exception {
-//
-//        User user = userService.findUserByJwtToken(jwt);
-//        Cart cart = cartService.findUserCart(user);
-//        Set<Order> orders = orderService.createOrder(user, shippingAddress, cart);
-//
-//       // PaymentOrder paymentOrder = paymentService.createOrder(user, orders);
-//
-//        PaymentLinkResponse res = new PaymentLinkResponse();
-//
-////        if (paymentMethod.equals(PaymentMethod.VNPAY)) {
-////            PaymentLink payment = paymentService.createVnPayPaymentLink(user,
-////                    paymentOrder.getAmount(),
-////                    paymentOrder.getId());
-////            String paymentUrl = payment.get("short_url");
-////            String paymentUrlId = payment.get("id");
-////
-////
-////            res.setPayment_link_url(paymentUrl);
-////
-////            paymentOrder.setPaymentLinkId(paymentUrlId);
-////            paymentOrderRepository.save(paymentOrder);
-////        }
-//
-//        return new ResponseEntity<>(res, HttpStatus.OK);
-//    }
-@PostMapping()
-public ResponseEntity<PaymentLinkResponse> createOrderHandler(
-        @RequestBody Address shippingAddress,
-        @RequestParam PaymentMethod paymentMethod,
-        @RequestHeader("Authorization") String jwt,
-        HttpServletRequest request
-) throws Exception {
+// File: .../controller/OrderController.java
 
-    User user = userService.findUserByJwtToken(jwt);
-    Cart cart = cartService.findUserCart(user);
-    Set<Order> orders = orderService.createOrder(user, shippingAddress, cart);
+    @PostMapping()
+    public ResponseEntity<PaymentLinkResponse> createOrderHandler(
+            @RequestBody Address shippingAddress,
+            @RequestParam PaymentMethod paymentMethod,
+            @RequestHeader("Authorization") String jwt,
+            HttpServletRequest request
+    ) throws Exception {
 
-    PaymentOrder paymentOrder = paymentService.createOrder(user, orders);
+        User user = userService.findUserByJwtToken(jwt);
+        Cart cart = cartService.findUserCart(user);
+        Set<Order> orders = orderService.createOrder(user, shippingAddress, cart);
 
-    PaymentLinkResponse res = new PaymentLinkResponse();
+        PaymentOrder paymentOrder = paymentService.createOrder(user, orders);
 
-    if (paymentMethod.equals(PaymentMethod.VNPAY)) {
+        PaymentLinkResponse res = new PaymentLinkResponse();
 
-        // --- SỬA LOGIC GỌI ---
-        // Gọi hàm mới với các tham số yêu cầu
-        String paymentUrl = paymentService.createVnpayPaymentLink(
-                user,
-                paymentOrder.getAmount(),
-                paymentOrder.getId(),
-                request
-        );
+        if (paymentMethod.equals(PaymentMethod.VNPAY)) {
+            // 1. Tạo link thanh toán (Hàm này bên service đã lưu paymentLinkId vào DB)
+            String paymentUrl = paymentService.createVnpayPaymentLink(
+                    user,
+                    paymentOrder.getAmount(),
+                    paymentOrder.getId(),
+                    request
+            );
 
-        res.setPayment_link_url(paymentUrl);
+            res.setPayment_link_url(paymentUrl);
 
-        // Lấy payment_link_id (vnp_TxnRef) đã được lưu bên trong service
-        paymentOrder.setPaymentLinkId(paymentOrder.getPaymentLinkId());
-        res.setPayment_link_id(paymentOrder.getPaymentLinkId());
+            // 2. QUAN TRỌNG: Fetch lại paymentOrder mới nhất từ DB để lấy paymentLinkId vừa được tạo
+            PaymentOrder updatedPaymentOrder = paymentService.getPaymentOrderById(paymentOrder.getId());
 
-        // Lưu lại PaymentOrder (bước này đã được thực hiện bên trong service,
-        // nhưng gọi lại cũng không sao, hoặc bạn có thể bỏ qua dòng save)
-        // paymentOrderRepository.save(paymentOrder);
-        // --- KẾT THÚC SỬA ---
+            res.setPayment_link_id(updatedPaymentOrder.getPaymentLinkId());
 
-    } else if (paymentMethod.equals(PaymentMethod.COD)) {
-        // Xử lý COD
-        res.setPayment_link_url(null);
-        res.setPayment_link_id(null);
+        } else if (paymentMethod.equals(PaymentMethod.COD)) {
+            res.setPayment_link_url(null);
+            res.setPayment_link_id(null);
+        }
+
+        return new ResponseEntity<>(res, HttpStatus.OK);
     }
-
-    return new ResponseEntity<>(res, HttpStatus.OK);
-}
     @GetMapping("/user")
     public ResponseEntity<List<Order>> userOrderHistoryHandler(
             @RequestHeader("Authorization") String jwt

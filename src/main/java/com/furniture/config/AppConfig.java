@@ -15,7 +15,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Arrays; // Import thêm Arrays nếu cần
 
 @Configuration
 @EnableWebSecurity
@@ -28,6 +28,9 @@ public class AppConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        // Cho phép truy cập công khai vào API Payment để nhận callback từ VNPay
+                        .requestMatchers("/api/payment/**").permitAll()
+
                         .requestMatchers("/api/**").authenticated()
                         .requestMatchers("/api/products/*/reviews").permitAll()
                         .anyRequest().permitAll()
@@ -44,6 +47,8 @@ public class AppConfig {
             @Override
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                 CorsConfiguration cfg = new CorsConfiguration();
+                // Nên thêm URL của VNPay Sandbox vào allowed origins nếu cần thiết,
+                // nhưng vì đây là redirect GET nên chủ yếu quan trọng là allow user browser (localhost:5173)
                 cfg.setAllowedOrigins(Collections.singletonList("http://localhost:5173"));
                 cfg.setAllowedMethods(Collections.singletonList("*"));
                 cfg.setAllowedHeaders(Collections.singletonList("*"));

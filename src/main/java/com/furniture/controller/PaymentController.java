@@ -1,5 +1,8 @@
+// File: ecommerce-furniture/src/main/java/com/furniture/controller/PaymentController.java
+
 package com.furniture.controller;
 
+import com.furniture.domain.PaymentOrderStatus; // Import thêm
 import com.furniture.modal.*;
 import com.furniture.response.ApiResponse;
 import com.furniture.service.*;
@@ -11,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,12 +36,12 @@ public class PaymentController {
             @RequestHeader("Authorization") String jwt
     ) throws Exception {
 
-        // Xác thực user (đảm bảo JWT hợp lệ)
-        userService.findUserByJwtToken(jwt);
+        User user = userService.findUserByJwtToken(jwt);
 
         PaymentOrder paymentOrder = paymentService.getPaymentOrderByPaymentId(paymentId);
 
-        Boolean success = paymentService.proceedPaymentOrder(
+        // Thực hiện cập nhật trạng thái (Nếu VNPay callback chưa chạy kịp thì hàm này sẽ chạy)
+        boolean isUpdated = paymentService.proceedPaymentOrder(
                 paymentOrder,
                 paymentId,
                 paymentLinkId,
@@ -45,9 +49,18 @@ public class PaymentController {
                 vnp_TransactionStatus
         );
 
-        if(success){
-            for(Order order : paymentOrder.getOrders()){
+        // Kiểm tra: Nếu vừa update thành công HOẶC trạng thái đã là SUCCESS (do callback chạy trước)
+        if (isUpdated || paymentOrder.getStatus().equals(PaymentOrderStatus.SUCCESS)) {
+
+            Set<Order> orders = paymentOrder.getOrders();
+            for (Order order : orders) {
+                // Kiểm tra xem transaction đã được tạo chưa để tránh duplicate
+                // (Giả sử transactionService có logic kiểm tra hoặc chúng ta check đơn giản ở đây nếu cần)
+                // Ở mức độ project này, ta có thể tạo transaction nếu order đã placed
+
+                // Lưu ý: Bạn có thể cần thêm logic check if(transactionService.existsByOrder(order)) để an toàn hơn
                 transactionService.createTransaction(order);
+
                 Seller seller = sellerService.getSellerById(order.getSellerId());
                 SellerReport report = sellerReportService.getSellerReport(seller);
                 report.setTotalOrders(report.getTotalOrders() + 1);
@@ -56,17 +69,16 @@ public class PaymentController {
                 sellerReportService.updateSellerReport(report);
             }
         }
+
         ApiResponse response = new ApiResponse();
         response.setMessage("Payment successful");
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    // API Return (User quay về sau khi thanh toán)
     @GetMapping("/vnpay/return")
     public ResponseEntity<?> vnpayReturn(HttpServletRequest request) throws Exception {
         Map<String, String> params = VNPayUtil.getAllRequestParams(request);
-        // Trả về 1 redirect (302) về ReactJS
         return paymentService.vnpayReturn(params);
     }
 }

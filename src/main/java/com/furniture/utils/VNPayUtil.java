@@ -1,6 +1,6 @@
 package com.furniture.utils;
 
-import jakarta.servlet.http.HttpServletRequest; // Sửa import
+import jakarta.servlet.http.HttpServletRequest;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
@@ -16,10 +16,10 @@ public class VNPayUtil {
                 throw new NullPointerException();
             }
             final Mac hmac512 = Mac.getInstance("HmacSHA512");
-            byte[] hmacKeyBytes = key.getBytes(StandardCharsets.UTF_8); // Dùng UTF-8
+            byte[] hmacKeyBytes = key.getBytes(StandardCharsets.UTF_8);
             final SecretKeySpec secretKey = new SecretKeySpec(hmacKeyBytes, "HmacSHA512");
             hmac512.init(secretKey);
-            byte[] dataBytes = data.getBytes(StandardCharsets.UTF_8); // Dùng UTF-8
+            byte[] dataBytes = data.getBytes(StandardCharsets.UTF_8);
             byte[] result = hmac512.doFinal(dataBytes);
             StringBuilder sb = new StringBuilder(2 * result.length);
             for (byte b : result) {
@@ -55,7 +55,7 @@ public class VNPayUtil {
         return sb.toString();
     }
 
-    // Sửa: Đổi tên hashAllFields thành getHashData (KHÔNG URL Encode)
+    // --- SỬA HÀM NÀY ---
     public static String getHashData(Map<String, String> fields) {
         List<String> fieldNames = new ArrayList<>(fields.keySet());
         Collections.sort(fieldNames);
@@ -67,7 +67,12 @@ public class VNPayUtil {
             if ((fieldValue != null) && (fieldValue.length() > 0)) {
                 sb.append(fieldName);
                 sb.append("=");
-                sb.append(fieldValue); // <-- KHÔNG ENCODE
+                try {
+                    // THÊM URLEncoder.encode VÀO ĐÂY
+                    sb.append(URLEncoder.encode(fieldValue, StandardCharsets.UTF_8.toString()));
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
             }
             if (itr.hasNext()) {
                 sb.append("&");
@@ -76,7 +81,6 @@ public class VNPayUtil {
         return sb.toString();
     }
 
-    // Thêm hàm mới: Tạo chuỗi Query (CÓ URL Encode)
     public static String getQuery(Map<String, String> fields) throws UnsupportedEncodingException {
         List<String> fieldNames = new ArrayList<>(fields.keySet());
         Collections.sort(fieldNames);
@@ -97,7 +101,6 @@ public class VNPayUtil {
         return sb.toString();
     }
 
-    // Hàm tiện ích lấy params từ request (cho Return URL)
     public static Map<String, String> getAllRequestParams(HttpServletRequest request) {
         Map<String, String> params = new HashMap<>();
         Enumeration<String> paramNames = request.getParameterNames();
