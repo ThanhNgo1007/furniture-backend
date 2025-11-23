@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Getter
 @Setter
@@ -28,9 +30,9 @@ public class OrderItem {
 
     private int quantity;
 
-    private Integer msrpPrice;
+    private BigDecimal msrpPrice;
 
-    private Integer sellingPrice;
+    private BigDecimal sellingPrice;
 
     private Long userId;
 

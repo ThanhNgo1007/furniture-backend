@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -27,7 +28,7 @@ public class AdminCouponController {
     public ResponseEntity<Cart> applyCoupon(
             @RequestParam String apply,
             @RequestParam String code,
-            @RequestParam double orderValue,
+            @RequestParam BigDecimal orderValue,
             @RequestHeader("Authorization") String jwt
     ) throws Exception {
         User user = userService.findUserByJwtToken(jwt);

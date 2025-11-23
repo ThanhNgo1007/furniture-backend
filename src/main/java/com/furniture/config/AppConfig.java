@@ -30,7 +30,7 @@ public class AppConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Cho phép truy cập công khai vào API Payment để nhận callback từ VNPay
                         .requestMatchers("/api/payment/**").permitAll()
-
+                        .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         .requestMatchers("/api/products/*/reviews").permitAll()
                         .anyRequest().permitAll()

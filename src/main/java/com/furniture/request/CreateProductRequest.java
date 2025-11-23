@@ -3,6 +3,7 @@ package com.furniture.request;
 import com.furniture.modal.Category;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Data
@@ -10,8 +11,8 @@ public class CreateProductRequest {
 
     private String title;
     private String description;
-    private int msrpPrice;
-    private int sellingPrice;
+    private BigDecimal msrpPrice;
+    private BigDecimal sellingPrice;
     private int quantity;
     private String color;
     private String room;

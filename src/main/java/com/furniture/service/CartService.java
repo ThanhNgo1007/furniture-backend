@@ -14,4 +14,6 @@ public interface CartService {
     );
 
     public Cart findUserCart(User user);
+
+    public void clearCart(User user);
 }

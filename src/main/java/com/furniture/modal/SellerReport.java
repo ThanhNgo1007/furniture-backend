@@ -1,8 +1,8 @@
 package com.furniture.modal;
 
-
 import jakarta.persistence.*;
 import lombok.*;
+import java.math.BigDecimal; // Nhớ import BigDecimal
 
 @Entity
 @Getter
@@ -19,16 +19,20 @@ public class SellerReport {
     @OneToOne
     private Seller seller;
 
-    private Long totalEarnings = 0L;
+    // --- THAY ĐỔI TỪ ĐÂY ---
 
-    private Long totalSales = 0L;
+    // Đổi Long -> BigDecimal và khởi tạo bằng ZERO
+    private BigDecimal totalEarnings = BigDecimal.ZERO;
 
-    private Long totalRefunds = 0L;
+    private Integer totalSales = 0;
 
-    private Long totalTax = 0L;
+    private BigDecimal totalRefunds = BigDecimal.ZERO;
 
-    private Long netEarnings = 0L;
+    private BigDecimal totalTax = BigDecimal.ZERO;
 
+    private BigDecimal netEarnings = BigDecimal.ZERO;
+
+    // Các trường số lượng giữ nguyên Integer
     private Integer totalOrders = 0;
 
     private Integer canceledOrders = 0;

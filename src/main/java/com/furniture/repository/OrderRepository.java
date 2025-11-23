@@ -7,6 +7,8 @@ import java.util.List;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    List<Order> findByUserId(Long userId);
-    List<Order> findBySellerId(Long sellerId);
+    // Sửa tên hàm để tự động sắp xếp giảm dần theo ngày (Mới nhất lên đầu)
+    List<Order> findByUserIdOrderByOrderDateDesc(Long userId);
+
+    List<Order> findBySellerIdOrderByOrderDateDesc(Long sellerId);
 }

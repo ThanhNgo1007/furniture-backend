@@ -11,6 +11,7 @@ import com.furniture.utils.VNPayUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,9 +43,9 @@ public class OrderServiceImpl implements OrderService {
             Long sellerId = entry.getKey();
             List<CartItem> items = entry.getValue();
 
-            int totalOrderPrice = items.stream()
-                    .mapToInt(CartItem::getSellingPrice)
-                    .sum();
+            BigDecimal totalOrderPrice = items.stream()
+                    .map(CartItem::getSellingPrice)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
             int totalItem = items.stream().mapToInt(CartItem::getQuantity).sum();
 
             Order createdOrder = new Order();
@@ -93,12 +94,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<Order> usersOrderHistory(Long userId) {
-        return orderRepository.findByUserId(userId);
+        return orderRepository.findByUserIdOrderByOrderDateDesc(userId);
     }
 
     @Override
     public List<Order> sellersOrder(Long sellerId) {
-        return orderRepository.findBySellerId(sellerId);
+        return orderRepository.findBySellerIdOrderByOrderDateDesc(sellerId);
     }
 
     @Override

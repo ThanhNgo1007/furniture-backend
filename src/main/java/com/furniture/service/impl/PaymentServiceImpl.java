@@ -19,6 +19,9 @@ import org.springframework.http.ResponseEntity; // <-- THÊM IMPORT
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -33,9 +36,9 @@ public class  PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public PaymentOrder createOrder(User user, Set<Order> orders) {
-        Long amount = orders.stream()
-                .mapToLong(Order::getTotalSellingPrice)
-                .sum();
+        BigDecimal amount = orders.stream()
+                .map(Order::getTotalSellingPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         PaymentOrder paymentOrder = new PaymentOrder();
         paymentOrder.setAmount(amount);
@@ -64,65 +67,70 @@ public class  PaymentServiceImpl implements PaymentService {
         return paymentOrder;
     }
 
-    // --- HÀM ĐÃ SỬA THEO YÊU CẦU CỦA BẠN (SỬA LỖI getPaymentDetails) ---
-    // File: .../service/impl/PaymentServiceImpl.java
-
     @Override
     @Transactional
     public Boolean proceedPaymentOrder(PaymentOrder paymentOrder,
-                                       String paymentId, // Đây là vnp_TransactionNo (VD: 14234567)
-                                       String paymentLinkId, // Đây là vnp_TxnRef (VD: 83452345)
+                                       String paymentId,
+                                       String paymentLinkId,
                                        String vnp_ResponseCode,
                                        String vnp_TransactionStatus) throws Exception {
 
-        if (paymentOrder.getStatus().equals(PaymentOrderStatus.PENDING)) {
+        // Kiểm tra nếu đơn hàng đã được xử lý rồi thì bỏ qua
+        if (!paymentOrder.getStatus().equals(PaymentOrderStatus.PENDING)) {
+            return false;
+        }
 
-            if ("00".equals(vnp_ResponseCode) && "00".equals(vnp_TransactionStatus)) {
+        Set<Order> orders = paymentOrder.getOrders();
 
-                Set<Order> orders = paymentOrder.getOrders();
+        // ===== XỬ LÝ THANH TOÁN THÀNH CÔNG =====
+        if ("00".equals(vnp_ResponseCode) && "00".equals(vnp_TransactionStatus)) {
+            for (Order order : orders) {
+                order.setPaymentStatus(PaymentStatus.COMPLETED);
+                order.setOrderStatus(OrderStatus.PLACED);
 
-                for (Order order : orders) {
-                    // 1. Cập nhật trạng thái đơn hàng
-                    order.setPaymentStatus(PaymentStatus.COMPLETED);
-                    order.setOrderStatus(OrderStatus.PLACED);
-
-                    // 2. --- KHẮC PHỤC LỖI NULL Ở ĐÂY ---
-                    // Bạn phải lấy PaymentDetails ra và set giá trị vào
-                    if (order.getPaymentDetails() == null) {
-                        order.setPaymentDetails(new PaymentDetails());
-                    }
-
-                    // Lưu vnp_TransactionNo vào paymentId
-                    order.getPaymentDetails().setPaymentId(paymentId);
-
-                    // Lưu vnp_TxnRef vào paymentLinkId
-                    order.getPaymentDetails().setPaymentLinkId(paymentLinkId);
-
-                    // Cập nhật trạng thái trong PaymentDetails
-                    order.getPaymentDetails().setStatus(PaymentStatus.COMPLETED);
-
-                    // 3. Lưu lại Order để Hibernate update xuống DB (bảng orders)
-                    orderRepository.save(order);
+                if (order.getPaymentDetails() == null) {
+                    order.setPaymentDetails(new PaymentDetails());
                 }
 
-                // Cập nhật PaymentOrder cha
-                paymentOrder.setStatus(PaymentOrderStatus.SUCCESS);
-                paymentOrderRepository.save(paymentOrder);
-                return true;
+                order.getPaymentDetails().setPaymentId(paymentId);
+                order.getPaymentDetails().setPaymentLinkId(paymentLinkId);
+                order.getPaymentDetails().setStatus(PaymentStatus.COMPLETED);
+
+                orderRepository.save(order);
             }
 
-            // Xử lý thất bại...
+            paymentOrder.setStatus(PaymentOrderStatus.SUCCESS);
+            paymentOrderRepository.save(paymentOrder);
+            return true;
+        }
+
+        // ===== XỬ LÝ HỦY THANH TOÁN / THẤT BẠI =====
+        else {
+            for (Order order : orders) {
+                // Đánh dấu đơn hàng đã bị hủy
+                order.setOrderStatus(OrderStatus.CANCELLED);
+                order.setPaymentStatus(PaymentStatus.FAILED);
+
+                if (order.getPaymentDetails() == null) {
+                    order.setPaymentDetails(new PaymentDetails());
+                }
+
+                order.getPaymentDetails().setPaymentId(paymentId);
+                order.getPaymentDetails().setPaymentLinkId(paymentLinkId);
+                order.getPaymentDetails().setStatus(PaymentStatus.FAILED);
+
+                orderRepository.save(order);
+            }
+
             paymentOrder.setStatus(PaymentOrderStatus.FAILED);
             paymentOrderRepository.save(paymentOrder);
             return false;
         }
-        return false;
     }
-    // --- KẾT THÚC HÀM SỬA ---
 
     // --- HÀM ĐÃ SỬA (THEO CHỮ KÝ HÀM BẠN YÊU CẦU) ---
     @Override
-    public String createVnpayPaymentLink(User user, Long amount, Long paymentOrderId,
+    public String createVnpayPaymentLink(User user, BigDecimal amount, Long paymentOrderId,
                                          HttpServletRequest request) throws Exception {
 
         // Lấy PaymentOrder và lưu vnp_TxnRef
@@ -134,9 +142,11 @@ public class  PaymentServiceImpl implements PaymentService {
         // Convert amount từ USD sang VND nếu cần
         // VNPay chỉ hỗ trợ VND, nên nếu website dùng USD thì phải convert
         String defaultCurrency = vnPayConfig.getDefaultCurrency();
-        
+
         // VNPay yêu cầu amount phải nhân 100 (ví dụ: 1000 VND = 100000)
-        long vnpAmount = amount * 100;
+        long vnpAmount = paymentOrder.getAmount()
+                .multiply(BigDecimal.valueOf(100))
+                .longValue(); // Chuyển về long để gửi cho VNPay
 
         Map<String, String> vnp_Params = new HashMap<>();
         vnp_Params.put("vnp_Version", vnPayConfig.getVersion());
@@ -188,26 +198,73 @@ public class  PaymentServiceImpl implements PaymentService {
         String hashData = VNPayUtil.getHashData(params);
         String signValue = VNPayUtil.hmacSHA512(vnPayConfig.getSecretKey(), hashData);
 
-        // QUAN TRỌNG: Đây là đường dẫn trang kết quả ở Frontend (React)
-        // Bạn có thể đổi "/payment/result" thành "/payment/success" cho dễ hiểu
-        String frontendUrl = "http://localhost:5173/payment/success";
+        String frontendSuccessUrl = "http://localhost:5173/payment/success";
+        String frontendFailedUrl = "http://localhost:5173/payment/failed";
 
         if (signValue.equals(vnp_SecureHash)) {
             String vnp_ResponseCode = params.get("vnp_ResponseCode");
-            String vnp_TxnRef = params.get("vnp_TxnRef"); // Đây là paymentLinkId
+            String vnp_TransactionStatus = params.get("vnp_TransactionStatus");
+            String vnp_TxnRef = params.get("vnp_TxnRef");
 
-            // Redirect về Frontend kèm tham số
-            // paymentId và paymentLinkId đều là vnp_TxnRef để khớp với Controller
+            // ===== THANH TOÁN THÀNH CÔNG =====
             if ("00".equals(vnp_ResponseCode)) {
-                return ResponseEntity.status(302).header("Location",
-                        frontendUrl + "?paymentId=" + vnp_TxnRef + "&paymentLinkId=" + vnp_TxnRef + "&vnp_ResponseCode=" + vnp_ResponseCode).build();
-            } else {
-                return ResponseEntity.status(302).header("Location",
-                        frontendUrl + "?error=true&vnp_ResponseCode=" + vnp_ResponseCode).build();
+                PaymentOrder paymentOrder = paymentOrderRepository.findByPaymentLinkId(vnp_TxnRef);
+                if (paymentOrder != null) {
+                    proceedPaymentOrder(
+                            paymentOrder,
+                            params.get("vnp_TransactionNo"),
+                            vnp_TxnRef,
+                            vnp_ResponseCode,
+                            vnp_TransactionStatus
+                    );
+                }
+
+                return ResponseEntity.status(302)
+                        .header("Location", frontendSuccessUrl +
+                                "?paymentId=" + vnp_TxnRef +
+                                "&paymentLinkId=" + vnp_TxnRef +
+                                "&vnp_ResponseCode=" + vnp_ResponseCode)
+                        .build();
+            }
+
+            // ===== THANH TOÁN THẤT BẠI / HỦY =====
+            else {
+                PaymentOrder paymentOrder = paymentOrderRepository.findByPaymentLinkId(vnp_TxnRef);
+                if (paymentOrder != null) {
+                    proceedPaymentOrder(
+                            paymentOrder,
+                            params.get("vnp_TransactionNo"),
+                            vnp_TxnRef,
+                            vnp_ResponseCode,
+                            vnp_TransactionStatus
+                    );
+                }
+
+                // ===== FIX: ENCODE MESSAGE TRƯỚC KHI GỬI =====
+                String errorMessage = getVNPayErrorMessage(vnp_ResponseCode);
+                String encodedMessage = URLEncoder.encode(errorMessage, StandardCharsets.UTF_8);
+
+                return ResponseEntity.status(302)
+                        .header("Location", frontendFailedUrl +
+                                "?error=true&vnp_ResponseCode=" + vnp_ResponseCode +
+                                "&message=" + encodedMessage) // <-- SỬ DỤNG encodedMessage
+                        .build();
             }
         } else {
-            return ResponseEntity.status(302).header("Location",
-                    frontendUrl + "?error=checksum_failed").build();
+            return ResponseEntity.status(302)
+                    .header("Location", frontendFailedUrl + "?error=checksum_failed")
+                    .build();
         }
+    }
+
+    private String getVNPayErrorMessage(String responseCode) {
+        return switch (responseCode) {
+            case "24" -> "Giao dịch bị hủy bởi khách hàng";
+            case "51" -> "Tài khoản không đủ số dư";
+            case "65" -> "Tài khoản đã vượt quá hạn mức giao dịch";
+            case "75" -> "Ngân hàng thanh toán đang bảo trì";
+            case "79" -> "Giao dịch bị timeout";
+            default -> "Giao dịch thất bại";
+        };
     }
 }

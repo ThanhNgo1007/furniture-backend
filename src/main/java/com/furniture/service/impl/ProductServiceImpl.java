@@ -19,6 +19,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -145,14 +147,17 @@ public class ProductServiceImpl implements ProductService {
 //        return productRepository.save(product);
 //    }
 
-    private int calculateDiscountPercentage(int msrpPrice, int sellingPrice) {
-        if (msrpPrice <= 0) {
-            throw new IllegalArgumentException("Actual price must be greater than 0");
+    private int calculateDiscountPercentage(BigDecimal msrpPrice, BigDecimal sellingPrice) {
+        if (msrpPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            return 0;
         }
-        double discount = msrpPrice - sellingPrice;
-        double discountPercentage = (discount/msrpPrice) * 100.0;
+        // (msrp - selling)
+        BigDecimal discount = msrpPrice.subtract(sellingPrice);
 
-        return (int)discountPercentage;
+        // (discount / msrp) * 100 -> Cần set scale và RoundingMode để tránh lỗi chia số lẻ vô hạn
+        return discount.divide(msrpPrice, 2, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100))
+                .intValue();
     }
 
 

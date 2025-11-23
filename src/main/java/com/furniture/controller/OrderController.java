@@ -25,9 +25,7 @@ public class OrderController {
     private final SellerReportService sellerReportService;
     private final PaymentService paymentService;
 
-// File: .../controller/OrderController.java
-
-    @PostMapping()
+@PostMapping()
     public ResponseEntity<PaymentLinkResponse> createOrderHandler(
             @RequestBody Address shippingAddress,
             @RequestParam PaymentMethod paymentMethod,
@@ -37,6 +35,8 @@ public class OrderController {
 
         User user = userService.findUserByJwtToken(jwt);
         Cart cart = cartService.findUserCart(user);
+
+        // Tạo đơn hàng
         Set<Order> orders = orderService.createOrder(user, shippingAddress, cart);
 
         PaymentOrder paymentOrder = paymentService.createOrder(user, orders);
@@ -44,7 +44,6 @@ public class OrderController {
         PaymentLinkResponse res = new PaymentLinkResponse();
 
         if (paymentMethod.equals(PaymentMethod.VNPAY)) {
-            // 1. Tạo link thanh toán (Hàm này bên service đã lưu paymentLinkId vào DB)
             String paymentUrl = paymentService.createVnpayPaymentLink(
                     user,
                     paymentOrder.getAmount(),
@@ -54,18 +53,21 @@ public class OrderController {
 
             res.setPayment_link_url(paymentUrl);
 
-            // 2. QUAN TRỌNG: Fetch lại paymentOrder mới nhất từ DB để lấy paymentLinkId vừa được tạo
             PaymentOrder updatedPaymentOrder = paymentService.getPaymentOrderById(paymentOrder.getId());
-
             res.setPayment_link_id(updatedPaymentOrder.getPaymentLinkId());
 
         } else if (paymentMethod.equals(PaymentMethod.COD)) {
+            // --- XÓA GIỎ HÀNG CHO COD ---
+            // Vì COD không cần thanh toán online, xóa giỏ hàng ngay
+            cartService.clearCart(user);
+
             res.setPayment_link_url(null);
             res.setPayment_link_id(null);
         }
 
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
+
     @GetMapping("/user")
     public ResponseEntity<List<Order>> userOrderHistoryHandler(
             @RequestHeader("Authorization") String jwt
@@ -110,7 +112,7 @@ public class OrderController {
         SellerReport report = sellerReportService.getSellerReport(seller);
 
         report.setCanceledOrders(report.getCanceledOrders() + 1);
-        report.setTotalRefunds(report.getTotalRefunds() + order.getTotalSellingPrice());
+        report.setTotalRefunds(report.getTotalRefunds().add(order.getTotalSellingPrice()));
         sellerReportService.updateSellerReport(report);
 
         return ResponseEntity.ok(order);

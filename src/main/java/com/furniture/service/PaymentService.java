@@ -6,6 +6,7 @@ import com.furniture.modal.User;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,7 +27,7 @@ public interface PaymentService {
     // --- KẾT THÚC THAY ĐỔI ---
 
     // --- HÀM MỚI BẠN YÊU CẦU ---
-    String createVnpayPaymentLink(User user, Long amount, Long paymentOrderId, HttpServletRequest request) throws Exception;
+    String createVnpayPaymentLink(User user, BigDecimal amount, Long paymentOrderId, HttpServletRequest request) throws Exception;
 
     // Đổi Map<String, String> thành ResponseEntity<?> (để redirect)
     ResponseEntity<?> vnpayReturn(Map<String, String> params) throws Exception;

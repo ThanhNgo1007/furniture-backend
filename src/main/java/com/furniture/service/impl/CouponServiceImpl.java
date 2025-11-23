@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class CouponServiceImpl implements CouponService {
 
 
     @Override
-    public Cart applyCoupon(String code, double orderValue, User user) throws Exception {
+    public Cart applyCoupon(String code, BigDecimal orderValue, User user) throws Exception {
 
         Coupon coupon = couponRepository.findByCode(code);
 
@@ -36,16 +37,23 @@ public class CouponServiceImpl implements CouponService {
         if(user.getUsedCoupons().contains(coupon)){
             throw new Exception("Coupon already used");
         }
-        if(orderValue <= coupon.getMinimumOrderValue()){
-            throw new Exception("Not enough minimum value" + coupon.getMinimumOrderValue());
+        if (orderValue.compareTo(coupon.getMinimumOrderValue()) <= 0) {
+            throw new Exception("Not enough minimum value: " + coupon.getMinimumOrderValue());
         }
         if(coupon.isActive() && LocalDate.now().isAfter(coupon.getValidityStartDate())
                 && LocalDate.now().isBefore(coupon.getValidityEndDate())){
             user.getUsedCoupons().add(coupon);
             userRepository.save(user);
 
-            double discountedPrice = (cart.getTotalSellingPrice()*coupon.getDiscountPercentage())/100;
-            cart.setTotalSellingPrice(cart.getTotalSellingPrice() - discountedPrice);
+            BigDecimal currentTotal = cart.getTotalSellingPrice(); // Giả sử Cart đã đổi sang BigDecimal
+            BigDecimal percentage = coupon.getDiscountPercentage();
+
+            BigDecimal discountedPrice = currentTotal.multiply(percentage)
+                    .divide(BigDecimal.valueOf(100));
+
+            // 2. Trừ tiền: Total - DiscountedPrice
+            cart.setTotalSellingPrice(currentTotal.subtract(discountedPrice));
+
             cart.setCouponCode(code);
             cartRepository.save(cart);
             return cart;
@@ -63,9 +71,18 @@ public class CouponServiceImpl implements CouponService {
         }
         Cart cart = cartRepository.findByUserId(user.getId());
 
-        double discountedPrice = (cart.getTotalSellingPrice()*coupon.getDiscountPercentage())/100;
+        BigDecimal currentTotal = cart.getTotalSellingPrice();
+        BigDecimal percentage = coupon.getDiscountPercentage();
 
-        cart.setTotalSellingPrice(cart.getTotalSellingPrice() + discountedPrice);
+        // Hệ số còn lại: (100 - percentage) / 100
+        BigDecimal remainingFactor = BigDecimal.valueOf(100).subtract(percentage)
+                .divide(BigDecimal.valueOf(100));
+
+        // Tính lại giá gốc: Price_Sau_Giam / Hệ số
+        // Ví dụ: Giá 80k, Giảm 20% (còn 0.8). Giá gốc = 80 / 0.8 = 100k
+        BigDecimal originalPrice = currentTotal.divide(remainingFactor);
+
+        cart.setTotalSellingPrice(originalPrice);
         cart.setCouponCode(null);
 
         return cartRepository.save(cart);

@@ -3,6 +3,7 @@ package com.furniture.modal;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
@@ -21,13 +22,13 @@ public class Coupon {
 
     private String code;
 
-    private double discountPercentage;
+    private BigDecimal discountPercentage;
 
     private LocalDate validityStartDate;
 
     private LocalDate validityEndDate;
 
-    private double minimumOrderValue;
+    private BigDecimal minimumOrderValue;
 
     private boolean isActive=true;
 

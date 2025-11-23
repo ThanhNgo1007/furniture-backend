@@ -26,15 +26,19 @@ public class PaymentController {
     private final SellerService sellerService;
     private final SellerReportService sellerReportService;
     private final TransactionService transactionService;
+    private final CartService cartService;
 
     @GetMapping("/{paymentId}")
     public ResponseEntity<ApiResponse> paymentSuccessHandler(
             @PathVariable String paymentId,
             @RequestParam String paymentLinkId,
-            @RequestParam(required = false, defaultValue = "00") String vnp_ResponseCode,
-            @RequestParam(required = false, defaultValue = "00") String vnp_TransactionStatus,
+            // SỬA: Xóa defaultValue="00" hoặc đổi thành mã khác (VD: "error") để tránh hiểu nhầm là thành công
+            @RequestParam(required = false) String vnp_ResponseCode,
+            @RequestParam(required = false) String vnp_TransactionStatus,
             @RequestHeader("Authorization") String jwt
     ) throws Exception {
+        if (vnp_ResponseCode == null) vnp_ResponseCode = "error";
+        if (vnp_TransactionStatus == null) vnp_TransactionStatus = "error";
 
         User user = userService.findUserByJwtToken(jwt);
 
@@ -64,10 +68,12 @@ public class PaymentController {
                 Seller seller = sellerService.getSellerById(order.getSellerId());
                 SellerReport report = sellerReportService.getSellerReport(seller);
                 report.setTotalOrders(report.getTotalOrders() + 1);
-                report.setTotalEarnings(report.getTotalEarnings() + order.getTotalSellingPrice());
+                report.setTotalEarnings(report.getTotalEarnings().add( order.getTotalSellingPrice()));
                 report.setTotalSales(report.getTotalSales() + order.getOrderItems().size());
                 sellerReportService.updateSellerReport(report);
             }
+
+            cartService.clearCart(user);
         }
 
         ApiResponse response = new ApiResponse();

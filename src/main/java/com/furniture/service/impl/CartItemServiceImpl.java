@@ -7,6 +7,8 @@ import com.furniture.service.CartItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+
 @Service
 @RequiredArgsConstructor
 public class CartItemServiceImpl implements CartItemService {
@@ -21,8 +23,9 @@ public class CartItemServiceImpl implements CartItemService {
 
         if (cartItemUser.getId().equals(userId)) {
             item.setQuantity(cartItem.getQuantity());
-            item.setMsrpPrice(item.getQuantity()*item.getProduct().getMsrpPrice());
-            item.setSellingPrice(item.getQuantity()*item.getProduct().getSellingPrice());
+            BigDecimal quantityBD = BigDecimal.valueOf(item.getQuantity());
+            item.setMsrpPrice(item.getProduct().getMsrpPrice().multiply(quantityBD));
+            item.setSellingPrice(item.getProduct().getSellingPrice().multiply(quantityBD));
 
             return cartItemRepository.save(item);
 

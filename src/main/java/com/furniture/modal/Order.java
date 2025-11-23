@@ -5,6 +5,7 @@ import com.furniture.domain.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,9 +39,9 @@ public class Order {
     @Embedded
     private PaymentDetails paymentDetails = new PaymentDetails();
 
-    private double totalMsrpPrice;
+    private BigDecimal totalMsrpPrice;
 
-    private Integer totalSellingPrice;
+    private BigDecimal totalSellingPrice;
 
     private Integer discount;
 

@@ -4,6 +4,7 @@ package com.furniture.modal;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -25,9 +26,9 @@ public class Product {
 
     private String description;
 
-    private int msrpPrice;
+    private BigDecimal msrpPrice;
 
-    private int sellingPrice;
+    private BigDecimal sellingPrice;
 
     private int discountPercent;
 

@@ -3,6 +3,7 @@ package com.furniture.modal;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,11 +25,11 @@ public class Cart {
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CartItem> cartItemsInBag = new HashSet<>();
 
-    private double totalSellingPrice;
+    private BigDecimal totalSellingPrice;
 
     private int totalItem;
 
-    private int totalMsrpPrice;
+    private BigDecimal totalMsrpPrice;
 
     private int discount;
 
