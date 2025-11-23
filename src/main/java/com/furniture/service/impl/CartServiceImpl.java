@@ -23,11 +23,16 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
 
     @Override
-    public CartItem addCartItem(User user, Product product, int quantity) {
+    public CartItem addCartItem(User user, Product product, int quantity) throws Exception {
         // Gọi hàm trên, đảm bảo cart KHÔNG BAO GIỜ null
         Cart cart = findUserCart(user);
 
         CartItem isPresent = cartItemRepository.findByCartAndProduct(cart, product);
+
+        // 1. Kiểm tra xem sản phẩm còn hàng không
+        if (product.getQuantity() == 0) {
+            throw new Exception("Sản phẩm " + product.getTitle() + " đã hết hàng.");
+        }
 
         if (isPresent == null) {
             CartItem cartItem = new CartItem();
@@ -44,6 +49,12 @@ public class CartServiceImpl implements CartService {
             cart.getCartItemsInBag().add(cartItem); // Giờ dòng này an toàn
 
             return cartItemRepository.save(cartItem);
+        }
+
+        // 3. Nếu sản phẩm ĐÃ CÓ trong giỏ -> Kiểm tra tổng số lượng sau khi cộng thêm
+        int newQuantity = isPresent.getQuantity() + quantity;
+        if (newQuantity > product.getQuantity()) {
+            throw new Exception("Bạn đã có " + isPresent.getQuantity() + " sản phẩm trong giỏ. Kho chỉ còn " + product.getQuantity() + ".");
         }
 
         // Nếu đã có item -> Update số lượng (Logic tùy chọn, có thể cộng dồn)

@@ -5,12 +5,10 @@ import com.furniture.domain.OrderStatus;
 import com.furniture.domain.PaymentMethod;
 import com.furniture.domain.PaymentOrderStatus;
 import com.furniture.domain.PaymentStatus;
-import com.furniture.modal.Order;
-import com.furniture.modal.PaymentDetails;
-import com.furniture.modal.PaymentOrder;
-import com.furniture.modal.User;
+import com.furniture.modal.*;
 import com.furniture.repository.OrderRepository;
 import com.furniture.repository.PaymentOrderRepository;
+import com.furniture.repository.ProductRepository;
 import com.furniture.service.PaymentService;
 import com.furniture.utils.VNPayUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,6 +30,7 @@ public class  PaymentServiceImpl implements PaymentService {
     private final PaymentOrderRepository paymentOrderRepository;
     private final OrderRepository orderRepository;
     private final VNPayConfig vnPayConfig;
+    private final ProductRepository productRepository;
 
     @Override
     @Transactional
@@ -97,6 +96,17 @@ public class  PaymentServiceImpl implements PaymentService {
                 order.getPaymentDetails().setStatus(PaymentStatus.COMPLETED);
 
                 orderRepository.save(order);
+
+                for (OrderItem item : order.getOrderItems()) {
+                    Product product = item.getProduct();
+                    int newQuantity = product.getQuantity() - item.getQuantity();
+
+                    // Đảm bảo không bị âm (phòng trường hợp race condition)
+                    if (newQuantity < 0) newQuantity = 0;
+
+                    product.setQuantity(newQuantity);
+                    productRepository.save(product); // Lưu lại số lượng mới
+                }
             }
 
             paymentOrder.setStatus(PaymentOrderStatus.SUCCESS);

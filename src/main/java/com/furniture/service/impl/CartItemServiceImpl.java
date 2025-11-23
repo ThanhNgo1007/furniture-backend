@@ -22,6 +22,9 @@ public class CartItemServiceImpl implements CartItemService {
         User cartItemUser = item.getCart().getUser();
 
         if (cartItemUser.getId().equals(userId)) {
+            if (cartItem.getQuantity() > item.getProduct().getQuantity()) {
+                throw new Exception("Kho chỉ còn " + item.getProduct().getQuantity() + " sản phẩm.");
+            }
             item.setQuantity(cartItem.getQuantity());
             BigDecimal quantityBD = BigDecimal.valueOf(item.getQuantity());
             item.setMsrpPrice(item.getProduct().getMsrpPrice().multiply(quantityBD));

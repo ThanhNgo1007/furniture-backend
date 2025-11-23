@@ -75,77 +75,13 @@ public class ProductServiceImpl implements ProductService {
         product.setSellingPrice(req.getSellingPrice());
         product.setImages(req.getImages());
         product.setMsrpPrice(req.getMsrpPrice());
+        product.setQuantity(req.getQuantity());
         product.setDiscountPercent(calculateDiscountPercentage(req.getMsrpPrice(), req.getSellingPrice()));
 
         return productRepository.save(product);
 
     }
 
-//    @Override
-//    public Product createProduct(CreateProductRequest req, Seller seller) {
-//
-//        // --- ROOM (Level 1 - Rooms) ---
-//        Category room = categoryRepository.findByCategoryId(req.getRoom());
-//        if (room == null) {
-//            room = new Category();
-//            room.setCategoryId(req.getRoom());
-//            room.setName(req.getRoom());
-//            room.setLevel(1);
-//            room = categoryRepository.save(room);
-//        }
-//
-//        // --- CATEGORY LEVEL 1 (Products) ---
-//        Category cat1 = categoryRepository.findByCategoryId(req.getCategory());
-//        if (cat1 == null) {
-//            cat1 = new Category();
-//            cat1.setCategoryId(req.getCategory());
-//            cat1.setName(req.getCategory());
-//            cat1.setLevel(1);
-//            cat1 = categoryRepository.save(cat1);
-//        }
-//
-//        // --- CATEGORY LEVEL 2 (Storage & organization / Bedroom) ---
-//        Category cat2 = categoryRepository.findByCategoryId(req.getCategory2());
-//        if (cat2 == null) {
-//            cat2 = new Category();
-//            cat2.setCategoryId(req.getCategory2());
-//            cat2.setName(req.getCategory2());
-//            cat2.setLevel(2);
-//            // liên kết với Products hoặc Room
-//            cat2.getParentCategory().add(cat1);
-//            cat2.getParentCategory().add(room);
-//            cat2 = categoryRepository.save(cat2);
-//        }
-//
-//        // --- CATEGORY LEVEL 3 (Dressers & drawers) ---
-//        Category cat3 = categoryRepository.findByCategoryId(req.getCategory3());
-//        if (cat3 == null) {
-//            cat3 = new Category();
-//            cat3.setCategoryId(req.getCategory3());
-//            cat3.setName(req.getCategory3());
-//            cat3.setLevel(3);
-//        }
-//        // luôn đảm bảo có 2 parent: Product path & Room path
-//        cat3.getParentCategory().add(cat2);
-//        categoryRepository.save(cat3);
-//
-//        // --- TẠO PRODUCT ---
-//        Product product = new Product();
-//        product.setSeller(seller);
-//        product.setRoom(room);
-//        product.setCategories(Set.of(cat3));
-//        product.setDescription(req.getDescription());
-//        product.setCreatedAt(LocalDateTime.now());
-//        product.setTitle(req.getTitle());
-//        product.setColor(req.getColor());
-//        product.setSellingPrice(req.getSellingPrice());
-//        product.setMsrpPrice(req.getMsrpPrice());
-//        product.setQuantity(req.getQuantity());
-//        product.setImages(req.getImages());
-//        product.setDiscountPercent(calculateDiscountPercentage(req.getMsrpPrice(), req.getSellingPrice()));
-//
-//        return productRepository.save(product);
-//    }
 
     private int calculateDiscountPercentage(BigDecimal msrpPrice, BigDecimal sellingPrice) {
         if (msrpPrice.compareTo(BigDecimal.ZERO) <= 0) {

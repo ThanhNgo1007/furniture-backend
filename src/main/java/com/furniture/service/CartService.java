@@ -11,7 +11,7 @@ public interface CartService {
             User user,
             Product product,
             int quantity
-    );
+    ) throws Exception;
 
     public Cart findUserCart(User user);
 
