@@ -35,11 +35,34 @@ public class WishlistServiceImpl implements WishlistService {
     @Override
     public Wishlist addProductToWishlist(User user, Product product) {
         Wishlist wishlist = getWishlistByUserId(user);
+        boolean isPresent = false;
 
-        if(wishlist.getProducts().contains(product)) {
-            wishlist.getProducts().remove(product);
+        // 1. Kiểm tra tồn tại bằng ID
+        for (Product p : wishlist.getProducts()) {
+            if (p.getId().equals(product.getId())) {
+                isPresent = true;
+                break;
+            }
         }
-        else wishlist.getProducts().add(product);
+
+        // 2. Logic TOGGLE (Dùng cho Product Details - Tim)
+        if (isPresent) {
+            wishlist.getProducts().removeIf(p -> p.getId().equals(product.getId()));
+        } else {
+            wishlist.getProducts().add(product);
+        }
+
+        return wishlistRepository.save(wishlist);
+    }
+
+    // --- HÀM MỚI: CHỈ XÓA (Dùng cho Wishlist - Nút X) ---
+    @Override
+    public Wishlist removeProductFromWishlist(User user, Product product) {
+        Wishlist wishlist = getWishlistByUserId(user);
+
+        // Chỉ thực hiện lệnh xóa, không bao giờ thêm
+        wishlist.getProducts().removeIf(p -> p.getId().equals(product.getId()));
+
         return wishlistRepository.save(wishlist);
     }
 }

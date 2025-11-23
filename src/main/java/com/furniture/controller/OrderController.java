@@ -1,7 +1,11 @@
 package com.furniture.controller;
 
+import com.furniture.domain.OrderStatus;
 import com.furniture.domain.PaymentMethod;
+import com.furniture.domain.PaymentStatus;
 import com.furniture.modal.*;
+import com.furniture.repository.OrderRepository;
+import com.furniture.repository.ProductRepository;
 import com.furniture.response.PaymentLinkResponse;
 import com.furniture.service.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,7 +29,12 @@ public class OrderController {
     private final SellerReportService sellerReportService;
     private final PaymentService paymentService;
 
-@PostMapping()
+    // --- 1. THÊM 2 REPOSITORY NÀY ---
+    private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
+    // --------------------------------
+
+    @PostMapping()
     public ResponseEntity<PaymentLinkResponse> createOrderHandler(
             @RequestBody Address shippingAddress,
             @RequestParam PaymentMethod paymentMethod,
@@ -36,7 +45,7 @@ public class OrderController {
         User user = userService.findUserByJwtToken(jwt);
         Cart cart = cartService.findUserCart(user);
 
-        // Tạo đơn hàng
+        // Tạo đơn hàng (Lúc này trạng thái là PENDING)
         Set<Order> orders = orderService.createOrder(user, shippingAddress, cart);
 
         PaymentOrder paymentOrder = paymentService.createOrder(user, orders);
@@ -52,13 +61,31 @@ public class OrderController {
             );
 
             res.setPayment_link_url(paymentUrl);
-
             PaymentOrder updatedPaymentOrder = paymentService.getPaymentOrderById(paymentOrder.getId());
             res.setPayment_link_id(updatedPaymentOrder.getPaymentLinkId());
 
         } else if (paymentMethod.equals(PaymentMethod.COD)) {
-            // --- XÓA GIỎ HÀNG CHO COD ---
-            // Vì COD không cần thanh toán online, xóa giỏ hàng ngay
+            // --- 2. CẬP NHẬT LOGIC CHO COD TẠI ĐÂY ---
+
+            for (Order order : orders) {
+                // A. Cập nhật trạng thái đơn hàng thành PLACED (Đã đặt)
+                order.setOrderStatus(OrderStatus.PLACED);
+                order.setPaymentStatus(PaymentStatus.PENDING); // COD thì chưa thanh toán tiền
+                orderRepository.save(order);
+
+                // B. Trừ số lượng sản phẩm trong kho
+                for (OrderItem item : order.getOrderItems()) {
+                    Product product = item.getProduct();
+                    int newQuantity = product.getQuantity() - item.getQuantity();
+
+                    if (newQuantity < 0) newQuantity = 0;
+
+                    product.setQuantity(newQuantity);
+                    productRepository.save(product);
+                }
+            }
+
+            // C. Xóa giỏ hàng
             cartService.clearCart(user);
 
             res.setPayment_link_url(null);

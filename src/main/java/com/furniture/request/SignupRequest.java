@@ -1,4 +1,4 @@
-package com.furniture.response;
+package com.furniture.request;
 
 import lombok.Data;
 

@@ -6,6 +6,7 @@ import com.furniture.modal.*;
 import com.furniture.repository.AddressRepository;
 import com.furniture.repository.OrderItemRepository;
 import com.furniture.repository.OrderRepository;
+import com.furniture.repository.ProductRepository;
 import com.furniture.service.OrderService;
 import com.furniture.utils.VNPayUtil;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final AddressRepository addressRepository;
     private final OrderItemRepository orderItemRepository;
+    private final ProductRepository productRepository;
 
     @Override
     public Set<Order> createOrder(User user, Address shippingAddress, Cart cart) {
@@ -116,7 +118,30 @@ public class OrderServiceImpl implements OrderService {
         if(!user.getId().equals(order.getUser().getId())) {
             throw new Exception("You don't have permission to cancel this order");
         }
+
+        // --- 3. THÊM LOGIC HOÀN TRẢ SỐ LƯỢNG KHO ---
+        // Chỉ cộng lại nếu đơn hàng ĐÃ ĐẶT (PLACED) hoặc ĐÃ XÁC NHẬN (CONFIRMED)
+        // Lý do: Nếu đơn hàng đang PENDING (ví dụ chờ thanh toán VNPAY), kho chưa bị trừ nên không cần cộng.
+        if (order.getOrderStatus().equals(OrderStatus.PLACED) ||
+                order.getOrderStatus().equals(OrderStatus.CONFIRMED) ||
+                order.getOrderStatus().equals(OrderStatus.SHIPPED)) {
+
+            for (OrderItem item : order.getOrderItems()) {
+                Product product = item.getProduct();
+
+                // Cộng lại số lượng đã mua vào kho
+                int newQuantity = product.getQuantity() + item.getQuantity();
+                product.setQuantity(newQuantity);
+
+                productRepository.save(product);
+            }
+        }
+        // ---------------------------------------------
+
         order.setOrderStatus(OrderStatus.CANCELLED);
+        // Có thể cập nhật thêm trạng thái thanh toán nếu cần, ví dụ:
+        // if (order.getPaymentDetails().getStatus().equals(PaymentStatus.COMPLETED)) { ...logic hoàn tiền... }
+
         return orderRepository.save(order);
     }
 
