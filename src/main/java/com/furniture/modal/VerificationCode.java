@@ -4,6 +4,8 @@ package com.furniture.modal;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Setter
@@ -20,9 +22,5 @@ public class VerificationCode {
 
     private String email;
 
-    @OneToOne
-    private User user;
-
-    @OneToOne
-    private Seller seller;
+    private LocalDateTime expiryDate; // Thêm trường này
 }

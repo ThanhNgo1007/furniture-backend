@@ -28,6 +28,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -44,6 +45,8 @@ public class AuthServiceImpl implements AuthService {
     private final CustomUserServiceImpl customUserService;
     private final SellerRepository sellerRepository;
 
+    // AuthServiceImpl.java
+
     @Override
     public void sentLoginOtp(String email, USER_ROLE role) throws Exception {
         String SIGNING_PREFIX = "signing_";
@@ -51,39 +54,45 @@ public class AuthServiceImpl implements AuthService {
         if (email.startsWith(SIGNING_PREFIX)) {
             email = email.substring(SIGNING_PREFIX.length());
 
-            if(role.equals(USER_ROLE.ROLE_SELLER)){
+            // --- SỬA LỖI TẠI ĐÂY ---
+            // Thêm check "role != null" trước khi so sánh
+            if (role != null && role.equals(USER_ROLE.ROLE_SELLER)) {
                 Seller seller = sellerRepository.findByEmail(email);
                 if (seller == null) {
                     throw new Exception("seller not found");
                 }
             } else {
+                // Nếu role là null hoặc là ROLE_CUSTOMER thì chạy vào đây
                 System.out.println("email" + email);
                 User user = userRepository.findByEmail(email);
                 if (user == null) {
                     throw new Exception("user not exist with provided email");
                 }
             }
-
-
+            // --- KẾT THÚC SỬA ---
         }
 
-        VerificationCode isExist = verificationCodeRepository.findByEmail(email);
-        if (isExist != null) {
-            verificationCodeRepository.delete(isExist);
+        // Tìm hoặc tạo VerificationCode
+        VerificationCode verificationCode = verificationCodeRepository.findByEmail(email);
+        if (verificationCode == null) {
+            verificationCode = new VerificationCode();
+            verificationCode.setEmail(email);
         }
 
+        // Tạo OTP mới
         String otp = OtpUtil.generateOtp();
-
-        VerificationCode verificationCode = new VerificationCode();
         verificationCode.setOtp(otp);
-        verificationCode.setEmail(email);
+
+        // ✅ QUAN TRỌNG: Set ExpiryDate
+        verificationCode.setExpiryDate(LocalDateTime.now().plusMinutes(5));
+
+        // Lưu vào database
         verificationCodeRepository.save(verificationCode);
 
-        String subject="AptDeco login/signup otp";
-        String text="Your login/signup otp is - " + otp;
-
-        emailService.sendVerificationOtpEmail(email,otp,subject,text);
-
+        // Gửi email
+        String subject = "AptDeco login/signup otp";
+        String text = "Your login/signup otp is - " + otp;
+        emailService.sendVerificationOtpEmail(email, otp, subject, text);
     }
 
     @Override
@@ -148,12 +157,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private Authentication authenticate(String username, String otp) {
-
         UserDetails userDetails = customUserService.loadUserByUsername(username);
 
         String SELLER_PREFIX = "seller_";
         if (username.startsWith(SELLER_PREFIX)) {
-          username = username.substring(SELLER_PREFIX.length());
+            username = username.substring(SELLER_PREFIX.length());
         }
 
         if (userDetails == null) {
@@ -165,7 +173,15 @@ public class AuthServiceImpl implements AuthService {
         if (verificationCode == null || !verificationCode.getOtp().equals(otp)) {
             throw new BadCredentialsException("wrong otp");
         }
-        return new UsernamePasswordAuthenticationToken(userDetails,
+
+        // ✅ Kiểm tra null trước khi gọi isBefore()
+        if (verificationCode.getExpiryDate() != null
+                && verificationCode.getExpiryDate().isBefore(LocalDateTime.now())) {
+            throw new BadCredentialsException("OTP has expired");
+        }
+
+        return new UsernamePasswordAuthenticationToken(
+                userDetails,
                 null,
                 userDetails.getAuthorities()
         );
