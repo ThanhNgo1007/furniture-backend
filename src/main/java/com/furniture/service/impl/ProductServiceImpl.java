@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -28,6 +29,7 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
@@ -130,44 +132,64 @@ public class ProductServiceImpl implements ProductService {
         Specification<Product> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (category != null) {
+            if (category != null && !category.isEmpty()) {
                 Join<Product, Category> categoryJoin = root.join("category");
                 predicates.add(criteriaBuilder.equal(categoryJoin.get("categoryId"), category));
             }
+
+            // --- SỬA LẠI LOGIC LỌC MÀU ---
             if (colors != null && !colors.isEmpty()) {
-                System.out.println("colors: " + colors);
-                predicates.add(criteriaBuilder.like(root.get("color"), colors));
+                // Dùng lower() và like %...% để tìm kiếm linh hoạt
+                // Ví dụ: Tìm "white" sẽ ra cả "White", "Off White"
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.lower(root.get("color")),
+                        "%" + colors.toLowerCase() + "%"
+                ));
             }
+
+            // --- CHỈ LỌC GIÁ KHI KHÁC NULL ---
             if (minPrice != null) {
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("sellingPrice"), minPrice));
             }
             if (maxPrice != null) {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("sellingPrice"), maxPrice));
             }
+
             if (minDiscount != null) {
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("discountPercent"), minDiscount));
             }
+
             if (stock != null) {
-                predicates.add(criteriaBuilder.like(root.get("stock"), stock));
+                predicates.add(criteriaBuilder.equal(root.get("stock"), stock));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
+
+        // --- LOGIC SORT & PAGINATION ---
         Pageable pageable;
+
+        // Xác định pageSize (Frontend gửi lên hoặc mặc định 10)
+        // Lưu ý: Trong interface Service bạn chưa có tham số pageSize,
+        // nếu chưa sửa interface thì hardcode logic ở đây:
+        int pageSize = 8;
 
         if (sort != null && !sort.isEmpty()) {
             pageable = switch (sort) {
-                case "price_low" -> PageRequest.of(pageNumber != null ? pageNumber : 0, 10,
-                        Sort.by("sellingPrice").ascending());
-                case "price_high" -> PageRequest.of(pageNumber != null ? pageNumber : 0, 10,
-                        Sort.by("sellingPrice").descending());
-                default -> PageRequest.of(pageNumber != null ? pageNumber : 0, 10,
-                        Sort.unsorted());
+                case "price_low" -> PageRequest.of(pageNumber, pageSize, Sort.by("sellingPrice").ascending());
+                case "price_high" -> PageRequest.of(pageNumber, pageSize, Sort.by("sellingPrice").descending());
+                case "newest" -> PageRequest.of(pageNumber, pageSize, Sort.by("createdAt").descending());
+
+                // CASE RANDOM: Trả về unsorted (hoặc sort theo ID để ổn định)
+                case "random" -> PageRequest.of(pageNumber, pageSize, Sort.unsorted());
+
+                default -> PageRequest.of(pageNumber, pageSize, Sort.unsorted());
             };
+        } else {
+            // Mặc định nếu không có sort (cũng coi như random/mới vào)
+            pageable = PageRequest.of(pageNumber, 8, Sort.unsorted());
         }
-        else {
-            pageable = PageRequest.of(pageNumber != null ? pageNumber : 0, 10, Sort.unsorted());
-        }
+
         return productRepository.findAll(spec, pageable);
     }
 

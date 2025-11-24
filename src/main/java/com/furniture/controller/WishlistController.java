@@ -42,4 +42,18 @@ public class WishlistController {
 
         return ResponseEntity.ok(updatedWishlist);
     }
+
+    @PutMapping("/remove-product/{productId}")
+    public ResponseEntity<Wishlist> removeProductFromWishlist(
+            @PathVariable Long productId,
+            @RequestHeader("Authorization") String jwt) throws Exception {
+
+        Product product = productService.findProductById(productId);
+        User user = userService.findUserByJwtToken(jwt);
+
+        // Gọi hàm remove riêng biệt
+        Wishlist updatedWishlist = wishlistService.removeProductFromWishlist(user, product);
+
+        return ResponseEntity.ok(updatedWishlist);
+    }
 }

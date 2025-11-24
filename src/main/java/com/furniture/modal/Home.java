@@ -13,11 +13,12 @@ import java.util.List;
 @Data
 public class Home {
 
+
     private List<HomeCategory> grid;
 
-    private List<HomeCategory> shopByCategories;
+    private List<HomeCategory> bestSeller;
 
-    private List<HomeCategory> holidayCategories;
+    private List<HomeCategory> decorCategories;
 
     private List<HomeCategory> dealCategories;
 

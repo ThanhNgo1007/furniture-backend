@@ -12,7 +12,7 @@ import com.furniture.repository.UserRepository;
 import com.furniture.repository.VerificationCodeRepository;
 import com.furniture.request.LoginRequest;
 import com.furniture.response.AuthResponse;
-import com.furniture.response.SignupRequest;
+import com.furniture.request.SignupRequest;
 import com.furniture.service.AuthService;
 import com.furniture.service.EmailService;
 import com.furniture.utils.OtpUtil;
@@ -26,8 +26,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -109,6 +109,8 @@ public class AuthServiceImpl implements AuthService {
 
             Cart cart = new Cart();
             cart.setUser(user);
+            cart.setTotalSellingPrice(BigDecimal.ZERO);
+            cart.setTotalMsrpPrice(BigDecimal.ZERO);
             cartRepository.save(cart);
         }
         List<GrantedAuthority> authorities = new ArrayList<>();
@@ -118,7 +120,7 @@ public class AuthServiceImpl implements AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
 
-        return jwtProvider.generateToken(authentication);
+        return jwtProvider.generateAccessToken(authentication);
     }
 
     @Override
@@ -126,17 +128,20 @@ public class AuthServiceImpl implements AuthService {
         String username = req.getEmail();
         String otp = req.getOtp();
 
-        Authentication authentication = authenticate(username,otp);
+        Authentication authentication = authenticate(username, otp);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String token = jwtProvider.generateToken(authentication);
+        // Sửa: Tạo cả 2 token
+        String accessToken = jwtProvider.generateAccessToken(authentication);
+        String refreshToken = jwtProvider.generateRefreshToken(authentication);
+
         AuthResponse authResponse = new AuthResponse();
-        authResponse.setJwt(token);
+        authResponse.setJwt(accessToken);
+        authResponse.setRefreshToken(refreshToken); // Set Refresh Token
         authResponse.setMessage("Login success");
 
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-        String roleName = authorities.isEmpty()?null:authorities.iterator().next().getAuthority();
-
+        String roleName = authorities.isEmpty() ? null : authorities.iterator().next().getAuthority();
         authResponse.setRole(USER_ROLE.valueOf(roleName));
 
         return authResponse;

@@ -26,12 +26,12 @@ public class HomeServiceImpl implements HomeService {
                 .filter(category -> category.getSection() == HomeCategorySection.GRID)
                 .collect(Collectors.toList());
 
-        List<HomeCategory> shopByCategories = allCategories.stream()
-                .filter(category -> category.getSection() == HomeCategorySection.SHOP_BY_CATEGORIES)
+        List<HomeCategory> bestSeller = allCategories.stream()
+                .filter(category -> category.getSection() == HomeCategorySection.BEST_SELLER)
                 .collect(Collectors.toList());
 
-        List<HomeCategory> holidayCategories = allCategories.stream()
-                .filter(category -> category.getSection() == HomeCategorySection.HOLIDAY_CATEGORIES)
+        List<HomeCategory> decorCategories = allCategories.stream()
+                .filter(category -> category.getSection() == HomeCategorySection.DECOR_CATEGORIES)
                 .collect(Collectors.toList());
 
         List<HomeCategory> dealCategories = allCategories.stream()
@@ -49,8 +49,8 @@ public class HomeServiceImpl implements HomeService {
 
         Home home = new Home();
         home.setGrid(gridCategories);
-        home.setShopByCategories(shopByCategories);
-        home.setHolidayCategories(holidayCategories);
+        home.setBestSeller(bestSeller);
+        home.setDecorCategories(decorCategories);
         home.setDeals(createdDeals);
 
         return home;

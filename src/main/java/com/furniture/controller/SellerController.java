@@ -67,26 +67,6 @@ public class SellerController {
         return new ResponseEntity<>(seller, HttpStatus.OK);
     }
 
-//    @PostMapping
-//    public ResponseEntity<Seller> createSeller(@RequestBody Seller seller)
-//            throws Exception, MessagingException {
-//        Seller savedSeller = sellerService.createSeller(seller);
-//
-//        String otp = OtpUtil.generateOtp();
-//
-//        VerificationCode verificationCode = new VerificationCode();
-//        verificationCode.setOtp(otp);
-//        verificationCode.setEmail(seller.getEmail());
-//        verificationCodeRepository.save(verificationCode);
-//
-//        String subject="AptDeco Email Verification Code";
-//        String text="Welcome to AptDeco, verify your account using this link ";
-//        String frontend_url = "http://localhost:3000/verify-seller/";
-//        emailService.sendVerificationOtpEmail(seller.getEmail(), verificationCode.getOtp(), subject, text + frontend_url);
-//
-//        return new ResponseEntity<>(savedSeller, HttpStatus.CREATED);
-//    }
-
     @PostMapping
     public ResponseEntity<Seller> createSeller(@RequestBody  Seller seller)
             throws Exception, MessagingException {

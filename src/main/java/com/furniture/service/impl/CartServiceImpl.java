@@ -1,5 +1,5 @@
+// File: src/main/java/com/furniture/service/impl/CartServiceImpl.java
 package com.furniture.service.impl;
-
 
 import com.furniture.modal.Cart;
 import com.furniture.modal.CartItem;
@@ -24,15 +24,15 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public CartItem addCartItem(User user, Product product, int quantity) throws Exception {
-        // Gọi hàm trên, đảm bảo cart KHÔNG BAO GIỜ null
+        // 1. Gọi findUserCart để đảm bảo luôn có Cart (tránh null)
         Cart cart = findUserCart(user);
 
-        CartItem isPresent = cartItemRepository.findByCartAndProduct(cart, product);
-
-        // 1. Kiểm tra xem sản phẩm còn hàng không
-        if (product.getQuantity() == 0) {
-            throw new Exception("Sản phẩm " + product.getTitle() + " đã hết hàng.");
+        // Kiểm tra tồn kho
+        if (product.getQuantity() < quantity) {
+            throw new Exception("Sản phẩm " + product.getTitle() + " không đủ số lượng.");
         }
+
+        CartItem isPresent = cartItemRepository.findByCartAndProduct(cart, product);
 
         if (isPresent == null) {
             CartItem cartItem = new CartItem();
@@ -41,24 +41,73 @@ public class CartServiceImpl implements CartService {
             cartItem.setQuantity(quantity);
             cartItem.setUserId(user.getId());
 
-            // Tính giá (BigDecimal)
+            // Tính giá bằng BigDecimal
             BigDecimal quantityBD = BigDecimal.valueOf(quantity);
-            cartItem.setSellingPrice(product.getSellingPrice().multiply(quantityBD));
-            cartItem.setMsrpPrice(product.getMsrpPrice().multiply(quantityBD));
 
-            cart.getCartItemsInBag().add(cartItem); // Giờ dòng này an toàn
+            // Lấy giá từ Product (đã là BigDecimal)
+            BigDecimal sellingPrice = product.getSellingPrice();
+            BigDecimal msrpPrice = product.getMsrpPrice();
+
+            cartItem.setSellingPrice(sellingPrice.multiply(quantityBD));
+            cartItem.setMsrpPrice(msrpPrice.multiply(quantityBD));
+
+            cart.getCartItemsInBag().add(cartItem);
 
             return cartItemRepository.save(cartItem);
         }
+        // Nếu đã có thì trả về item cũ (hoặc bạn có thể code thêm logic cộng dồn số lượng)
+        return isPresent;
+    }
 
-        // 3. Nếu sản phẩm ĐÃ CÓ trong giỏ -> Kiểm tra tổng số lượng sau khi cộng thêm
-        int newQuantity = isPresent.getQuantity() + quantity;
-        if (newQuantity > product.getQuantity()) {
-            throw new Exception("Bạn đã có " + isPresent.getQuantity() + " sản phẩm trong giỏ. Kho chỉ còn " + product.getQuantity() + ".");
+    @Override
+    public Cart findUserCart(User user) {
+        Cart cart = cartRepository.findByUserId(user.getId());
+
+        // 2. Tự động tạo Cart nếu chưa có
+        if (cart == null) {
+            cart = new Cart();
+            cart.setUser(user);
+            cart.setTotalItem(0);
+            cart.setTotalSellingPrice(BigDecimal.ZERO);
+            cart.setTotalMsrpPrice(BigDecimal.ZERO);
+            cart.setDiscount(0);
+            cart = cartRepository.save(cart);
         }
 
-        // Nếu đã có item -> Update số lượng (Logic tùy chọn, có thể cộng dồn)
-        return isPresent;
+        // 3. Tính toán lại tổng tiền Cart (Dùng BigDecimal)
+        BigDecimal totalPrice = BigDecimal.ZERO;
+        BigDecimal totalSellingPrice = BigDecimal.ZERO;
+        int totalItem = 0;
+
+        for (CartItem cartItem : cart.getCartItemsInBag()) {
+            totalItem += cartItem.getQuantity();
+
+            // Null safe add
+            BigDecimal itemMsrp = cartItem.getMsrpPrice() != null ? cartItem.getMsrpPrice() : BigDecimal.ZERO;
+            BigDecimal itemSelling = cartItem.getSellingPrice() != null ? cartItem.getSellingPrice() : BigDecimal.ZERO;
+
+            totalPrice = totalPrice.add(itemMsrp);
+            totalSellingPrice = totalSellingPrice.add(itemSelling);
+        }
+
+        cart.setTotalMsrpPrice(totalPrice);
+        cart.setTotalSellingPrice(totalSellingPrice);
+        cart.setTotalItem(totalItem);
+        cart.setDiscount(calculateDiscountPercentage(totalPrice, totalSellingPrice));
+
+        return cartRepository.save(cart);
+    }
+
+    private int calculateDiscountPercentage(BigDecimal msrpPrice, BigDecimal sellingPrice) {
+        if (msrpPrice == null || msrpPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            return 0;
+        }
+        BigDecimal discount = msrpPrice.subtract(sellingPrice);
+
+        // (discount / msrp) * 100
+        return discount.divide(msrpPrice, 2, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(100))
+                .intValue();
     }
 
     @Override
@@ -83,51 +132,5 @@ public class CartServiceImpl implements CartService {
             // Lưu lại
             cartRepository.save(cart);
         }
-    }
-
-    @Override
-    public Cart findUserCart(User user) {
-
-        Cart cart = cartRepository.findByUserId(user.getId());
-
-        if (cart == null) {
-            cart = new Cart();
-            cart.setUser(user);
-            cart.setTotalItem(0);
-            // Khởi tạo giá trị mặc định (BigDecimal.ZERO nếu bạn đã đổi, hoặc 0 nếu chưa)
-            cart.setTotalSellingPrice(BigDecimal.ZERO);
-            cart.setTotalMsrpPrice(BigDecimal.ZERO);
-            cart = cartRepository.save(cart);
-        }
-
-        BigDecimal totalPrice = BigDecimal.ZERO;
-        BigDecimal totalDiscountedPrice = BigDecimal.ZERO;
-        int totalItem = 0;
-
-        for (CartItem cartItem : cart.getCartItemsInBag()) {
-            totalItem += cartItem.getQuantity();
-            totalPrice = totalPrice.add(cartItem.getMsrpPrice());
-            totalDiscountedPrice = totalDiscountedPrice.add(cartItem.getSellingPrice());
-        }
-
-        cart.setTotalMsrpPrice(totalPrice);
-        cart.setTotalSellingPrice(totalDiscountedPrice);
-        cart.setTotalItem(totalItem);
-        cart.setDiscount(calculateDiscountPercentage(totalPrice, totalDiscountedPrice));
-        cart.setTotalItem(totalItem);
-        return cart;
-    }
-
-    private int calculateDiscountPercentage(BigDecimal msrpPrice, BigDecimal sellingPrice) {
-        if (msrpPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            return 0;
-        }
-        // (msrp - selling)
-        BigDecimal discount = msrpPrice.subtract(sellingPrice);
-
-        // (discount / msrp) * 100 -> Cần set scale và RoundingMode để tránh lỗi chia số lẻ vô hạn
-        return discount.divide(msrpPrice, 2, RoundingMode.HALF_UP)
-                .multiply(BigDecimal.valueOf(100))
-                .intValue();
     }
 }

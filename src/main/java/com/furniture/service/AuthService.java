@@ -3,7 +3,7 @@ package com.furniture.service;
 import com.furniture.domain.USER_ROLE;
 import com.furniture.request.LoginRequest;
 import com.furniture.response.AuthResponse;
-import com.furniture.response.SignupRequest;
+import com.furniture.request.SignupRequest;
 
 public interface AuthService {
 
