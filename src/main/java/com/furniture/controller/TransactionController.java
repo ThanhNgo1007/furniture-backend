@@ -2,14 +2,13 @@ package com.furniture.controller;
 
 import com.furniture.modal.Seller;
 import com.furniture.modal.Transaction;
+import com.furniture.response.ApiResponse;
 import com.furniture.service.SellerService;
 import com.furniture.service.TransactionService;
+import com.furniture.service.impl.TransactionServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -35,6 +34,22 @@ public class TransactionController {
     public ResponseEntity<List<Transaction>> getAllTransaction(){
         List<Transaction> transactions = transactionService.getAllTransactions();
         return ResponseEntity.ok(transactions);
+    }
+
+    @PostMapping("/payout")
+    public ResponseEntity<ApiResponse> payoutSeller(
+            @RequestHeader("Authorization") String jwt
+    ) throws Exception {
+        Seller seller = sellerService.getSellerProfile(jwt);
+
+        // Gọi service xử lý update paid = true
+        // (Cần ép kiểu hoặc gọi trực tiếp service impl nếu interface chưa có, tốt nhất là update Interface)
+        List<Transaction> transactions = ((TransactionServiceImpl) transactionService).processPayout(seller);
+
+        ApiResponse res = new ApiResponse();
+        res.setMessage("Payout successful. " + transactions.size() + " transactions processed.");
+
+        return ResponseEntity.ok(res);
     }
 
 

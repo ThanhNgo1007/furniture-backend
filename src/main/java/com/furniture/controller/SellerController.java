@@ -67,28 +67,32 @@ public class SellerController {
         return new ResponseEntity<>(seller, HttpStatus.OK);
     }
 
+    // File: com/furniture/controller/SellerController.java
+
     @PostMapping
-    public ResponseEntity<Seller> createSeller(@RequestBody  Seller seller)
+    public ResponseEntity<Seller> createSeller(@RequestBody Seller seller)
             throws Exception, MessagingException {
 
+        // 1. Tạo seller trong DB
         Seller savedSeller = sellerService.createSeller(seller);
 
+        // 2. Tạo OTP
         String otp = OtpUtil.generateOtp();
-
         VerificationCode verificationCode = new VerificationCode();
         verificationCode.setOtp(otp);
-
-        // --- SỬA LỖI Ở ĐÂY ---
-        // Lỗi cũ: verificationCode.setEmail(seller.getEmail());
-        verificationCode.setEmail(savedSeller.getEmail()); // <-- Dùng email TỪ ĐỐI TƯỢNG ĐÃ LƯU
-        // --- KẾT THÚC SỬA ---
-
+        verificationCode.setEmail(savedSeller.getEmail()); // Lấy email từ user đã lưu
         verificationCodeRepository.save(verificationCode);
-        String subject="AptDeco Email Verification Code";
-        String text="Welcome to AptDeco, verify your account using this link ";
-        String frontend_url = "http://localhost:3000/verify-seller/";
 
-        emailService.sendVerificationOtpEmail(savedSeller.getEmail(), verificationCode.getOtp(), subject, text + frontend_url);
+        // 3. Gửi Email chứa Link xác thực
+        String subject = "AptDeco Seller Account Verification";
+        // URL trỏ về Frontend (Vite thường chạy port 5173, hãy sửa nếu bạn dùng port khác)
+        String frontend_url = "http://localhost:5173/verify-seller/" + otp;
+
+        String text = "Welcome to AptDeco! Click the link below to verify your seller account: ";
+        String link = "<a href=\"" + frontend_url + "\">Verify Account</a>"; // Hoặc gửi raw URL
+
+        // Gửi email (Lưu ý: hàm sendVerificationOtpEmail cần hỗ trợ gửi text kèm link)
+        emailService.sendVerificationOtpEmail(savedSeller.getEmail(), otp, subject, text + frontend_url);
 
         return new ResponseEntity<>(savedSeller, HttpStatus.CREATED);
     }
@@ -140,6 +144,18 @@ public class SellerController {
         sellerService.deleteSeller(id);
         return ResponseEntity.noContent().build();
     }
+
+    // File: ecommerce-furniture/src/main/java/com/furniture/controller/SellerController.java
+
+    // ... imports
+
+    @GetMapping("/account-status")
+    public ResponseEntity<Seller> getSellerAccountStatus(@RequestParam String email) throws Exception {
+        Seller seller = sellerService.getSellerByEmail(email);
+        return new ResponseEntity<>(seller, HttpStatus.OK);
+    }
+
+    // ... các endpoint khác
 
 
 }

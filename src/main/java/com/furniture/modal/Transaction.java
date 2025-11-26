@@ -28,4 +28,6 @@ public class Transaction {
     private Seller seller;
 
     private LocalDateTime date = LocalDateTime.now();
+
+    private boolean paid;
 }

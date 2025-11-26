@@ -87,16 +87,16 @@ public class SellerServiceImpl implements SellerService {
             existingSeller.setEmail(seller.getEmail());
         }
         if(seller.getBussinessDetails() != null
-        && seller.getBussinessDetails().getBussinessName() != null) {
+                && seller.getBussinessDetails().getBussinessName() != null) {
             existingSeller.getBussinessDetails().setBussinessName(
                     seller.getBussinessDetails().getBussinessName()
             );
         }
 
         if(seller.getBankDetails() != null
-        && seller.getBankDetails().getAccountHolderName() != null
-        && seller.getBankDetails().getSwiftCode() != null
-        && seller.getBankDetails().getAccountNumber() != null) {
+                && seller.getBankDetails().getAccountHolderName() != null
+                && seller.getBankDetails().getSwiftCode() != null
+                && seller.getBankDetails().getAccountNumber() != null) {
 
             existingSeller.getBankDetails().setAccountHolderName(
                     seller.getBankDetails().getAccountHolderName()
@@ -110,10 +110,10 @@ public class SellerServiceImpl implements SellerService {
         }
 
         if(seller.getPickupAddress() != null
-        && seller.getPickupAddress().getAddress() != null
-        && seller.getPickupAddress().getCity() != null
-        && seller.getPickupAddress().getMobile() != null
-        && seller.getPickupAddress().getWard() != null) {
+                && seller.getPickupAddress().getAddress() != null
+                && seller.getPickupAddress().getCity() != null
+                && seller.getPickupAddress().getMobile() != null
+                && seller.getPickupAddress().getWard() != null) {
             existingSeller.getPickupAddress().setAddress(
                     seller.getPickupAddress().getAddress()
             );
@@ -140,9 +140,11 @@ public class SellerServiceImpl implements SellerService {
 
     @Override
     public Seller verifyEmail(String email, String otp) throws Exception {
-
         Seller seller = getSellerByEmail(email);
+
+        // Cập nhật trạng thái
         seller.setEmailVerified(true);
+        seller.setAccountStatus(AccountStatus.ACTIVE); // <--- THÊM DÒNG NÀY
 
         return sellerRepository.save(seller);
     }

@@ -27,6 +27,7 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setSeller(seller);
         transaction.setCustomer(order.getUser());
         transaction.setOrder(order);
+        transaction.setPaid(false);
 
         return transactionRepository.save(transaction);
     }
@@ -39,5 +40,15 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     public List<Transaction> getAllTransactions() {
         return transactionRepository.findAll();
+    }
+
+    public List<Transaction> processPayout(Seller seller) {
+        List<Transaction> unpaidTransactions = transactionRepository.findBySellerIdAndPaidFalse(seller.getId());
+
+        for (Transaction tr : unpaidTransactions) {
+            tr.setPaid(true); // Đánh dấu đã rút tiền
+        }
+
+        return transactionRepository.saveAll(unpaidTransactions);
     }
 }

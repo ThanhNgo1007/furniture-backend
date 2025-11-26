@@ -1,5 +1,6 @@
 package com.furniture.modal;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.furniture.domain.AccountStatus;
 import com.furniture.domain.USER_ROLE;
 import jakarta.persistence.*;
@@ -27,14 +28,18 @@ public class Seller {
     private String password;
 
     @Embedded
+    @JsonProperty("businessDetails") // Map key "businessDetails" từ FE vào biến này
     private BussinessDetails bussinessDetails = new BussinessDetails();
 
     @Embedded
+    @JsonProperty("bankDetails") // Map key "bankDetails"
     private BankDetails bankDetails = new BankDetails();
 
     @OneToOne(cascade = CascadeType.ALL)
+    @JsonProperty("pickupAddress") // Map key "pickupAddress"
     private Address pickupAddress = new Address();
 
+    @JsonProperty("MST") // Map key "MST"
     private String MST;
 
     private USER_ROLE role = USER_ROLE.ROLE_SELLER;
