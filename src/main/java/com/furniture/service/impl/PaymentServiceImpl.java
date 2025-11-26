@@ -1,27 +1,38 @@
 package com.furniture.service.impl;
 
+import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
+
+import org.springframework.http.ResponseEntity; // <-- THÊM IMPORT
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.furniture.config.VNPayConfig;
 import com.furniture.domain.OrderStatus;
 import com.furniture.domain.PaymentMethod;
 import com.furniture.domain.PaymentOrderStatus;
 import com.furniture.domain.PaymentStatus;
-import com.furniture.modal.*;
+import com.furniture.modal.Order;
+import com.furniture.modal.OrderItem;
+import com.furniture.modal.PaymentDetails;
+import com.furniture.modal.PaymentOrder;
+import com.furniture.modal.Product;
+import com.furniture.modal.User;
 import com.furniture.repository.OrderRepository;
 import com.furniture.repository.PaymentOrderRepository;
 import com.furniture.repository.ProductRepository;
 import com.furniture.service.PaymentService;
 import com.furniture.utils.VNPayUtil;
+
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity; // <-- THÊM IMPORT
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
-import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +45,7 @@ public class  PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
-    public PaymentOrder createOrder(User user, Set<Order> orders) {
+    public PaymentOrder createOrder(User user, Set<Order> orders, PaymentMethod paymentMethod) {
         BigDecimal amount = orders.stream()
                 .map(Order::getTotalSellingPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -43,8 +54,7 @@ public class  PaymentServiceImpl implements PaymentService {
         paymentOrder.setAmount(amount);
         paymentOrder.setUser(user);
         paymentOrder.setOrders(orders);
-        // Gán phương thức thanh toán cho PaymentOrder
-        paymentOrder.setPaymentMethod(PaymentMethod.VNPAY); // Hoặc lấy động
+        paymentOrder.setPaymentMethod(paymentMethod);
         paymentOrder.setStatus(PaymentOrderStatus.PENDING);
 
         return paymentOrderRepository.save(paymentOrder);
@@ -85,7 +95,7 @@ public class  PaymentServiceImpl implements PaymentService {
         if ("00".equals(vnp_ResponseCode) && "00".equals(vnp_TransactionStatus)) {
             for (Order order : orders) {
                 order.setPaymentStatus(PaymentStatus.COMPLETED);
-                order.setOrderStatus(OrderStatus.PLACED);
+                order.setOrderStatus(OrderStatus.CONFIRMED);
 
                 if (order.getPaymentDetails() == null) {
                     order.setPaymentDetails(new PaymentDetails());

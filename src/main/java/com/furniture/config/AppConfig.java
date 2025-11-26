@@ -16,7 +16,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.util.Collections;
-import java.util.Arrays; // Import thêm Arrays nếu cần
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -32,11 +32,35 @@ public class AppConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // Cho phép truy cập công khai vào API Payment để nhận callback từ VNPay
+                        // ===== 1. PUBLIC ENDPOINTS (Không cần authentication) =====
+
+                        // Auth endpoints - QUAN TRỌNG: Thêm /auth/refresh
+                        .requestMatchers(
+                                "/auth/sent/login-signup-otp",
+                                "/auth/signing",
+                                "/auth/signup",
+                                "/auth/refresh"  // ⭐ THÊM ENDPOINT REFRESH TOKEN
+                        ).permitAll()
+
+                        // Seller public endpoints
+                        .requestMatchers(
+                                "/sellers/login",
+                                "/sellers/account-status"
+                        ).permitAll()
+
+                        // Payment & Product reviews
                         .requestMatchers("/api/payment/**").permitAll()
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/api/**").authenticated()
                         .requestMatchers("/api/products/*/reviews").permitAll()
+
+                        // ===== 2. PROTECTED ENDPOINTS (Yêu cầu authentication) =====
+
+                        // Tất cả API khác của customer
+                        .requestMatchers("/api/**").authenticated()
+
+                        // Tất cả API của seller (trừ login đã permit ở trên)
+                        .requestMatchers("/sellers/**").authenticated()
+
+                        // ===== 3. CÁC REQUEST KHÁC =====
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(new JwtTokenValidator(secretKey), BasicAuthenticationFilter.class)
@@ -46,16 +70,31 @@ public class AppConfig {
         return http.build();
     }
 
-    // Fix #4: CORS Configuration an toàn hơn
+    // CORS Configuration
     private CorsConfigurationSource corsConfigurationSource() {
         return request -> {
             CorsConfiguration cfg = new CorsConfiguration();
-            cfg.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:5173", "http://localhost:4000"));
+
+            // Allowed origins
+            cfg.setAllowedOrigins(Arrays.asList(
+                    "http://localhost:3000",
+                    "http://localhost:5173",
+                    "http://localhost:4000"
+            ));
+
+            // Allowed methods
             cfg.setAllowedMethods(Collections.singletonList("*"));
+
+            // Credentials
             cfg.setAllowCredentials(true);
+
+            // Headers
             cfg.setAllowedHeaders(Collections.singletonList("*"));
             cfg.setExposedHeaders(Arrays.asList("Authorization"));
+
+            // Max age
             cfg.setMaxAge(3600L);
+
             return cfg;
         };
     }

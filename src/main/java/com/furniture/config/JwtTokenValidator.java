@@ -18,6 +18,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 // Không dùng @Component để tránh Spring tự động đăng ký Filter này 2 lần
@@ -39,7 +40,7 @@ public class JwtTokenValidator extends OncePerRequestFilter {
             jwt = jwt.substring(7);
 
             try {
-                SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes());
+                SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
                 Claims claims = Jwts.parserBuilder()
                         .setSigningKey(key)
                         .build()

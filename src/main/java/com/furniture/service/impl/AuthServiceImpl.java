@@ -1,6 +1,7 @@
 package com.furniture.service.impl;
 
 import com.furniture.config.JwtProvider;
+import com.furniture.domain.AccountStatus;
 import com.furniture.domain.USER_ROLE;
 import com.furniture.modal.Cart;
 import com.furniture.modal.Seller;
@@ -157,24 +158,50 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private Authentication authenticate(String username, String otp) {
+        // 1. Load UserDetails (Giữ nguyên username có prefix để phân biệt bảng)
         UserDetails userDetails = customUserService.loadUserByUsername(username);
 
         String SELLER_PREFIX = "seller_";
+        String actualEmail = username; // Biến này sẽ lưu email gốc
+
+        // 2. Xử lý logic Seller
         if (username.startsWith(SELLER_PREFIX)) {
-            username = username.substring(SELLER_PREFIX.length());
+            actualEmail = username.substring(SELLER_PREFIX.length()); // Cắt bỏ "seller_"
+
+            // Logic kiểm tra trạng thái tài khoản (Giữ nguyên như bạn đã viết)
+            Seller seller = sellerRepository.findByEmail(actualEmail);
+            if (seller != null && seller.getAccountStatus() == AccountStatus.PENDING_VERIFICATION) {
+                try {
+                    String newOtp = OtpUtil.generateOtp();
+                    VerificationCode vc = verificationCodeRepository.findByEmail(actualEmail);
+                    if (vc == null) {
+                        vc = new VerificationCode();
+                        vc.setEmail(actualEmail);
+                    }
+                    vc.setOtp(newOtp);
+                    // Set thời gian hết hạn nếu có
+                    // vc.setExpiryDate(LocalDateTime.now().plusMinutes(5));
+                    verificationCodeRepository.save(vc);
+
+                    String subject = "AptDeco Seller Account Verification (Resend)";
+                    String frontend_url = "http://localhost:5173/verify-seller/" + newOtp;
+                    String text = "Your account is not verified yet. Please verify using this link: " + frontend_url;
+                    emailService.sendVerificationOtpEmail(actualEmail, newOtp, subject, text);
+                } catch (Exception e) {
+                    throw new BadCredentialsException("Failed to send verification email");
+                }
+                throw new BadCredentialsException("Account is not verified. A new verification email has been sent.");
+            }
         }
 
-        if (userDetails == null) {
-            throw new BadCredentialsException("invalid username");
-        }
-
-        VerificationCode verificationCode = verificationCodeRepository.findByEmail(username);
+        // 3. Tìm OTP bằng actualEmail (QUAN TRỌNG: Đã sửa từ username thành actualEmail)
+        VerificationCode verificationCode = verificationCodeRepository.findByEmail(actualEmail);
 
         if (verificationCode == null || !verificationCode.getOtp().equals(otp)) {
             throw new BadCredentialsException("wrong otp");
         }
 
-        // ✅ Kiểm tra null trước khi gọi isBefore()
+        // 4. Kiểm tra hết hạn
         if (verificationCode.getExpiryDate() != null
                 && verificationCode.getExpiryDate().isBefore(LocalDateTime.now())) {
             throw new BadCredentialsException("OTP has expired");

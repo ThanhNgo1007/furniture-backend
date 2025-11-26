@@ -1,20 +1,37 @@
 package com.furniture.service.impl;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
 import com.furniture.domain.OrderStatus;
+import com.furniture.domain.PaymentMethod;
+import com.furniture.domain.PaymentOrderStatus;
 import com.furniture.domain.PaymentStatus;
-import com.furniture.modal.*;
+import com.furniture.modal.Address;
+import com.furniture.modal.Cart;
+import com.furniture.modal.CartItem;
+import com.furniture.modal.Order;
+import com.furniture.modal.OrderItem;
+import com.furniture.modal.PaymentOrder;
+import com.furniture.modal.Product;
+import com.furniture.modal.User;
 import com.furniture.repository.AddressRepository;
 import com.furniture.repository.OrderItemRepository;
 import com.furniture.repository.OrderRepository;
+import com.furniture.repository.PaymentOrderRepository;
 import com.furniture.repository.ProductRepository;
 import com.furniture.service.OrderService;
+import com.furniture.service.TransactionService;
 import com.furniture.utils.VNPayUtil;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -24,18 +41,21 @@ public class OrderServiceImpl implements OrderService {
     private final AddressRepository addressRepository;
     private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
+    private final TransactionService transactionService;
+    private final PaymentOrderRepository paymentOrderRepository;
 
     @Override
     public Set<Order> createOrder(User user, Address shippingAddress, Cart cart) {
 
-        if(!user.getAddresses().contains(shippingAddress)) {
-            user.getAddresses().add(shippingAddress);
-        }
         Address address = addressRepository.save(shippingAddress);
 
-        //brand 1 => 4 Drawers & dressers
-        //brand 2 => 3 Beds
-        //brand 3 => 1 Lamps & light fixtures
+        // 2. Kiểm tra an toàn: Chỉ thêm vào User nếu chưa có địa chỉ ID này
+        boolean isAddressLinked = user.getAddresses().stream()
+                .anyMatch(a -> a.getId().equals(address.getId()));
+
+        if (!isAddressLinked) {
+            user.getAddresses().add(address);
+        }
 
         Map<Long, List<CartItem>> itemsBySeller = cart.getCartItemsInBag().stream()
                 .collect(Collectors.groupingBy(item->item.getProduct().getSeller().getId()));
@@ -59,7 +79,10 @@ public class OrderServiceImpl implements OrderService {
             createdOrder.setShippingAddress(address);
             createdOrder.setOrderStatus(OrderStatus.PENDING);
             createdOrder.getPaymentDetails().setStatus(PaymentStatus.PENDING);
+
+
             createdOrder.setOrderId("ORD-" + VNPayUtil.getRandomNumber(6));
+
 
             Order savedOrder = orderRepository.save(createdOrder);
             orders.add(savedOrder);
@@ -108,6 +131,33 @@ public class OrderServiceImpl implements OrderService {
     public Order updateOrderStatus(Long orderId, OrderStatus orderStatus) throws Exception {
         Order order = findOrderById(orderId);
         order.setOrderStatus(orderStatus);
+
+        // LOGIC MỚI: Xử lý khi giao hàng thành công
+        if (orderStatus.equals(OrderStatus.DELIVERED)) {
+
+            // Lấy PaymentOrder từ repository thay vì từ order.getPaymentOrder()
+            PaymentOrder paymentOrder = paymentOrderRepository.findByOrderId(order.getId())
+                    .orElse(null);
+
+            // 1. Xử lý COD: Cập nhật trạng thái thanh toán
+            if (paymentOrder != null && paymentOrder.getPaymentMethod().equals(PaymentMethod.COD)) {
+
+                // Update status trong Order
+                order.getPaymentDetails().setStatus(PaymentStatus.COMPLETED);
+                order.setPaymentStatus(PaymentStatus.COMPLETED);
+
+                // Update status trong PaymentOrder (Bảng cha)
+                paymentOrder.setStatus(PaymentOrderStatus.SUCCESS);
+                paymentOrderRepository.save(paymentOrder);
+            }
+
+            // 2. Tạo Transaction cho Seller
+            // Chỉ tạo transaction khi đơn hàng đã hoàn thành thanh toán
+            if (order.getPaymentDetails().getStatus().equals(PaymentStatus.COMPLETED)) {
+                transactionService.createTransaction(order);
+            }
+        }
+
         return orderRepository.save(order);
     }
 

@@ -63,7 +63,7 @@ public class PaymentController {
                 // Ở mức độ project này, ta có thể tạo transaction nếu order đã placed
 
                 // Lưu ý: Bạn có thể cần thêm logic check if(transactionService.existsByOrder(order)) để an toàn hơn
-                transactionService.createTransaction(order);
+                //transactionService.createTransaction(order);
 
                 Seller seller = sellerService.getSellerById(order.getSellerId());
                 SellerReport report = sellerReportService.getSellerReport(seller);

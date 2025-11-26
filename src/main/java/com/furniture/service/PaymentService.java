@@ -1,17 +1,20 @@
 package com.furniture.service;
 
-import com.furniture.modal.Order;
-import com.furniture.modal.PaymentOrder;
-import com.furniture.modal.User;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.http.ResponseEntity;
-
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.http.ResponseEntity;
+
+import com.furniture.domain.PaymentMethod;
+import com.furniture.modal.Order;
+import com.furniture.modal.PaymentOrder;
+import com.furniture.modal.User;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 public interface PaymentService {
-    PaymentOrder createOrder(User user, Set<Order> orders);
+    PaymentOrder createOrder(User user, Set<Order> orders, PaymentMethod paymentMethod);
 
     PaymentOrder getPaymentOrderById(Long orderId) throws Exception;
 
