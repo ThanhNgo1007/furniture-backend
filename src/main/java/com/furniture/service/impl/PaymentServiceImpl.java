@@ -57,6 +57,12 @@ public class  PaymentServiceImpl implements PaymentService {
         paymentOrder.setPaymentMethod(paymentMethod);
         paymentOrder.setStatus(PaymentOrderStatus.PENDING);
 
+        // Update payment method in each order's PaymentDetails
+        for (Order order : orders) {
+            order.getPaymentDetails().setPaymentMethod(paymentMethod);
+            orderRepository.save(order);
+        }
+
         return paymentOrderRepository.save(paymentOrder);
     }
 

@@ -79,6 +79,7 @@ public class OrderServiceImpl implements OrderService {
             createdOrder.setShippingAddress(address);
             createdOrder.setOrderStatus(OrderStatus.PENDING);
             createdOrder.getPaymentDetails().setStatus(PaymentStatus.PENDING);
+            createdOrder.getPaymentDetails().setPaymentMethod(PaymentMethod.COD); // Default to COD
 
 
             createdOrder.setOrderId("ORD-" + VNPayUtil.getRandomNumber(6));

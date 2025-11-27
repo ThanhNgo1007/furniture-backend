@@ -1,6 +1,11 @@
 // File: src/main/java/com/furniture/service/impl/CartServiceImpl.java
 package com.furniture.service.impl;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+import org.springframework.stereotype.Service;
+
 import com.furniture.modal.Cart;
 import com.furniture.modal.CartItem;
 import com.furniture.modal.Product;
@@ -8,12 +13,9 @@ import com.furniture.modal.User;
 import com.furniture.repository.CartItemRepository;
 import com.furniture.repository.CartRepository;
 import com.furniture.service.CartService;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 @Service
 @RequiredArgsConstructor
@@ -55,8 +57,23 @@ public class CartServiceImpl implements CartService {
 
             return cartItemRepository.save(cartItem);
         }
-        // Nếu đã có thì trả về item cũ (hoặc bạn có thể code thêm logic cộng dồn số lượng)
-        return isPresent;
+        
+        // Nếu đã có thì cộng dồn quantity
+        int newQuantity = isPresent.getQuantity() + quantity;
+        
+        // Kiểm tra tồn kho với số lượng mới
+        if (product.getQuantity() < newQuantity) {
+            throw new Exception("Sản phẩm " + product.getTitle() + " không đủ số lượng. Còn lại: " + product.getQuantity());
+        }
+        
+        isPresent.setQuantity(newQuantity);
+        
+        // Cập nhật lại giá theo số lượng mới
+        BigDecimal newQuantityBD = BigDecimal.valueOf(newQuantity);
+        isPresent.setSellingPrice(product.getSellingPrice().multiply(newQuantityBD));
+        isPresent.setMsrpPrice(product.getMsrpPrice().multiply(newQuantityBD));
+        
+        return cartItemRepository.save(isPresent);
     }
 
     @Override

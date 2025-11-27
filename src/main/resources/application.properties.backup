@@ -3,23 +3,23 @@ spring.application.name=ecommerce-furniture
 server.port=5454
 
 spring.jpa.hibernate.ddl-auto=update
-spring.datasource.url=${DB_URL:jdbc:mysql://localhost:3306/nl_ecommerce}
-spring.datasource.username=${DB_USERNAME:root}
-spring.datasource.password=${DB_PASSWORD}
+spring.datasource.url=jdbc:mysql://localhost:3306/nl_ecommerce
+spring.datasource.username=root
+spring.datasource.password=NHT123456@
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 spring.jpa.show-sql: true
 
 spring.mail.host=smtp.gmail.com
 spring.mail.port=587
-spring.mail.username=${MAIL_USERNAME}
-spring.mail.password=${MAIL_PASSWORD}
+spring.mail.username=lckchaser1007@gmail.com
+spring.mail.password=cils lfls scfd qral
 spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
 
 
 # --- Fix #8: Secrets Management ---
-# Using environment variables for sensitive data
-jwt.secret=${JWT_SECRET}
+# Trong môi tr??ng dev, b?n có th? set giá tr? tr?c ti?p ho?c dùng bi?n môi tr??ng
+jwt.secret=${JWT_SECRET:dkkjahdkjhsdhakdkjbakbgflahflabfj1298795y4897@khfkafkj79234782}
 jwt.expiration=86400000
 
 # --- Fix #11: Performance & HikariCP ---
@@ -33,11 +33,11 @@ server.compression.enabled=true
 server.compression.mime-types=application/json,text/html,text/xml,text/plain,text/css,application/javascript
 server.compression.min-response-size=1024
 
-# VNPay Configuration - Using Environment Variables
+# VNPay Configuration - Sandbox Environment (Localhost)
 vnpay.api.url=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-vnpay.tmn.code=${VNPAY_TMN_CODE}
-vnpay.secret.key=${VNPAY_SECRET_KEY}
-vnpay.return.url=${VNPAY_RETURN_URL:http://localhost:5454/api/payment/vnpay/return}
+vnpay.tmn.code=C522S46I
+vnpay.secret.key=QEN8X6ICYK9PDNP9VMH12W61W6S0PBW3
+vnpay.return.url=http://localhost:5454/api/payment/vnpay/return
 vnpay.api.version=2.1.0
 vnpay.command=pay
 vnpay.order.type=other
@@ -45,3 +45,5 @@ vnpay.order.type=other
 # Currency Configuration
 app.currency.default=USD
 app.currency.exchange.rate.usd.to.vnd=25000
+
+

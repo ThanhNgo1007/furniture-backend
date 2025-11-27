@@ -1,6 +1,8 @@
 package com.furniture.modal;
 
+import com.furniture.domain.PaymentMethod;
 import com.furniture.domain.PaymentStatus;
+
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,4 +16,5 @@ public class PaymentDetails {
     private String paymentId;
     private String paymentLinkId;
     private PaymentStatus status;
+    private PaymentMethod paymentMethod;
 }
