@@ -1,27 +1,32 @@
 package com.furniture.controller;
 
-import com.furniture.config.JwtProvider;
-import com.furniture.domain.USER_ROLE;
-import com.furniture.modal.User;
-import com.furniture.modal.Seller;
-import com.furniture.repository.UserRepository;
-import com.furniture.repository.SellerRepository;
-import com.furniture.request.LoginRequest;
-import com.furniture.response.ApiResponse;
-import com.furniture.response.AuthResponse;
-import com.furniture.request.SignupRequest;
-import com.furniture.service.AuthService;
-import lombok.RequiredArgsConstructor;
+import java.util.Collections;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collections;
-import java.util.Map;
+import com.furniture.config.JwtProvider;
+import com.furniture.domain.USER_ROLE;
+import com.furniture.modal.Seller;
+import com.furniture.modal.User;
+import com.furniture.repository.SellerRepository;
+import com.furniture.repository.UserRepository;
+import com.furniture.request.LoginRequest;
+import com.furniture.request.SignupRequest;
+import com.furniture.response.ApiResponse;
+import com.furniture.response.AuthResponse;
+import com.furniture.service.AuthService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/auth")
@@ -53,13 +58,13 @@ public class AuthController {
     }
 
     @PostMapping("/signing")
-    public ResponseEntity<AuthResponse> loginHandler(@RequestBody LoginRequest req) throws Exception {
+    public ResponseEntity<AuthResponse> loginHandler(@Valid @RequestBody LoginRequest req) throws Exception {
         AuthResponse authResponse = authService.signing(req);
         return ResponseEntity.ok(authResponse);
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<AuthResponse> createUserHandler(@RequestBody SignupRequest req) throws Exception {
+    public ResponseEntity<AuthResponse> createUserHandler(@Valid @RequestBody SignupRequest req) throws Exception {
         String jwt = authService.createUser(req);
 
         AuthResponse res = new AuthResponse();

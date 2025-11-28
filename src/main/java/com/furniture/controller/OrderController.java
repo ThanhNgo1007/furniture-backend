@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -58,6 +59,7 @@ public class OrderController {
     // --------------------------------
 
     @PostMapping()
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<PaymentLinkResponse> createOrderHandler(
             @RequestBody Address shippingAddress,
             @RequestParam PaymentMethod paymentMethod,
@@ -128,14 +130,21 @@ public class OrderController {
     }
 
     @GetMapping("/{orderId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public  ResponseEntity<Order> getOrderById(
             @PathVariable Long orderId,
             @RequestHeader("Authorization") String jwt
     ) throws Exception {
         // Xác thực user (đảm bảo JWT hợp lệ)
-        userService.findUserByJwtToken(jwt);
-        Order orders = orderService.findOrderById(orderId);
-        return new ResponseEntity<>(orders, HttpStatus.ACCEPTED);
+        User user = userService.findUserByJwtToken(jwt);
+        Order order = orderService.findOrderById(orderId);
+        
+        // CHECK IDOR: Kiểm tra xem order có thuộc về user này không
+        if (!order.getUser().getId().equals(user.getId())) {
+            throw new Exception("You don't have permission to view this order");
+        }
+        
+        return new ResponseEntity<>(order, HttpStatus.ACCEPTED);
     }
 
     @GetMapping("/item/{orderItemId}")

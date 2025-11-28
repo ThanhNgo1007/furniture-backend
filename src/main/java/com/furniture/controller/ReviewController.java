@@ -1,5 +1,18 @@
 package com.furniture.controller;
 
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.furniture.modal.Product;
 import com.furniture.modal.Review;
 import com.furniture.modal.User;
@@ -8,11 +21,9 @@ import com.furniture.response.ApiResponse;
 import com.furniture.service.ProductService;
 import com.furniture.service.ReviewService;
 import com.furniture.service.UserService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,7 +46,7 @@ public class ReviewController {
     public ResponseEntity<Review> writeReview(
             @PathVariable Long productId,
             @RequestHeader("Authorization") String jwt,
-            @RequestBody CreateReviewRequest req) throws Exception {
+            @Valid @RequestBody CreateReviewRequest req) throws Exception {
 
         User user = userService.findUserByJwtToken(jwt);
         Product product = productService.findProductById(productId);
@@ -48,7 +59,7 @@ public class ReviewController {
     public ResponseEntity<Review> updateReview(
             @PathVariable Long reviewId,
             @RequestHeader("Authorization") String jwt,
-            @RequestBody CreateReviewRequest req) throws Exception {
+            @Valid @RequestBody CreateReviewRequest req) throws Exception {
 
         User user = userService.findUserByJwtToken(jwt);
         Review review = reviewService.updateReview(

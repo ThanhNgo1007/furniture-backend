@@ -1,10 +1,14 @@
 package com.furniture.service;
 
-import com.furniture.domain.OrderStatus;
-import com.furniture.modal.*;
-
 import java.util.List;
 import java.util.Set;
+
+import com.furniture.domain.OrderStatus;
+import com.furniture.modal.Address;
+import com.furniture.modal.Cart;
+import com.furniture.modal.Order;
+import com.furniture.modal.OrderItem;
+import com.furniture.modal.User;
 
 public interface OrderService {
 

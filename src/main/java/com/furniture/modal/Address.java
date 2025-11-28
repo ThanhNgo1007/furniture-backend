@@ -1,11 +1,17 @@
 package com.furniture.modal;
 
-import com.fasterxml.jackson.annotation.JsonProperty; // Import thư viện này
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import lombok.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
@@ -18,24 +24,31 @@ public class Address {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @JsonProperty("name") // Thêm dòng này
+    @JsonProperty("name")
+    @NotBlank(message = "Name is required")
     private String name;
 
-    @JsonProperty("locality") // Thêm dòng này
+    @JsonProperty("locality")
     private String locality;
 
-    @JsonProperty("address") // Thêm dòng này
+    @JsonProperty("address")
+    @NotBlank(message = "Address is required")
     private String address;
 
-    @JsonProperty("city") // Thêm dòng này
+    @JsonProperty("city")
+    @NotBlank(message = "City is required")
     private String city;
 
-    @JsonProperty("ward") // Frontend gửi "state", Backend đang để "ward"? Hãy sửa cho khớp
-    private String ward; // Đổi tên biến này thành state cho khớp Frontend, hoặc map "state" vào "ward"
+    @JsonProperty("ward")
+    private String ward;
 
-    @JsonProperty("pinCode") // Thêm dòng này
+    @JsonProperty("pinCode")
+    @NotBlank(message = "Pin code is required")
+    @Pattern(regexp = "^[0-9]{5}$", message = "Pin code must be exactly 5 digits")
     private String pinCode;
 
-    @JsonProperty("mobile") // Thêm dòng này
+    @JsonProperty("mobile")
+    @NotBlank(message = "Mobile number is required")
+    @Pattern(regexp = "^[0-9]{10}$", message = "Mobile number must be exactly 10 digits")
     private String mobile;
 }
