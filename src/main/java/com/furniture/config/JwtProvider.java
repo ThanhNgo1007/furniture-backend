@@ -33,7 +33,7 @@ public class JwtProvider {
 
         return Jwts.builder()
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(new Date().getTime() + 1800000)) // 15 phút
+                .setExpiration(new Date(new Date().getTime() + 900000)) // 30 phút
                 .claim("email", auth.getName())
                 .claim("authorities", roles)
                 .signWith(getSecretKey())

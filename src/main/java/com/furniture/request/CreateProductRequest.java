@@ -20,7 +20,7 @@ public class CreateProductRequest {
     private String title;
     
     @NotBlank(message = "Description is required")
-    @Size(min = 10, max = 65535, message = "Description must be between 10 and 65535 characters")
+    @Size(min = 10, max = 2000, message = "Description must be between 10 and 65535 characters")
     private String description;
     
     @NotNull(message = "MSRP price is required")
@@ -32,14 +32,11 @@ public class CreateProductRequest {
     private BigDecimal sellingPrice;
     
     @Min(value = 1, message = "Quantity must be at least 1")
-    @Max(value = 99999, message = "Quantity cannot exceed 99999")
+    @Max(value = 9999, message = "Quantity cannot exceed 9999")
     private int quantity;
     
     @Size(max = 50, message = "Color cannot exceed 50 characters")
     private String color;
-    
-    @Size(max = 50, message = "Room cannot exceed 50 characters")
-    private String room;
     
     @NotEmpty(message = "At least one image is required")
     @Size(max = 10, message = "Maximum 10 images allowed")
