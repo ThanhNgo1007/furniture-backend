@@ -2,11 +2,16 @@ package com.furniture.modal;
 
 
 import com.furniture.domain.HomeCategorySection;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
@@ -24,4 +29,6 @@ public class HomeCategory {
     private String image;
     private String categoryId;
     private HomeCategorySection section;
+    private Integer displayOrder;
+    private Boolean isActive;
 }

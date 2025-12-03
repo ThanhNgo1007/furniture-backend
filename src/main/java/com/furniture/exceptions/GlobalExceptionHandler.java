@@ -1,4 +1,4 @@
-package com.furniture.exception;
+package com.furniture.exceptions;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;

@@ -1,7 +1,6 @@
 package com.furniture.domain;
 
 public enum AccountStatus {
-
     PENDING_VERIFICATION, //Tai khoan duoc tao nhung chua xac thuc
     ACTIVE, //Tai khoan da duoc kich hoat va dang hoat dong
     SUSPENDED, // Tai khoan bi dinh chi hoat dong tam thoi

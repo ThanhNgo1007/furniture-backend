@@ -1,10 +1,10 @@
 package com.furniture.service;
 
+import java.util.List;
+
 import com.furniture.domain.AccountStatus;
 import com.furniture.exceptions.SellerException;
 import com.furniture.modal.Seller;
-
-import java.util.List;
 
 public interface SellerService {
 

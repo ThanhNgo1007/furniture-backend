@@ -1,5 +1,10 @@
 package com.furniture.service.impl;
 
+import java.util.List;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.furniture.config.JwtProvider;
 import com.furniture.domain.AccountStatus;
 import com.furniture.domain.USER_ROLE;
@@ -9,11 +14,8 @@ import com.furniture.modal.Seller;
 import com.furniture.repository.AddressRepository;
 import com.furniture.repository.SellerRepository;
 import com.furniture.service.SellerService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor

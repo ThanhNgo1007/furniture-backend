@@ -1,5 +1,20 @@
 package com.furniture.controller;
 
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.furniture.config.JwtProvider;
 import com.furniture.domain.AccountStatus;
 import com.furniture.exceptions.SellerException;
@@ -7,22 +22,16 @@ import com.furniture.modal.Seller;
 import com.furniture.modal.SellerReport;
 import com.furniture.modal.VerificationCode;
 import com.furniture.repository.VerificationCodeRepository;
-import com.furniture.request.LoginOtpRequest;
 import com.furniture.request.LoginRequest;
-import com.furniture.response.ApiResponse;
 import com.furniture.response.AuthResponse;
 import com.furniture.service.AuthService;
 import com.furniture.service.EmailService;
 import com.furniture.service.SellerReportService;
 import com.furniture.service.SellerService;
 import com.furniture.utils.OtpUtil;
+
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor

@@ -3,6 +3,7 @@ package com.furniture.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
@@ -18,14 +19,16 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     List<Product> findBySellerId(Long id);
 
     @Query("""
-    SELECT  p
-    FROM Product p
+    SELECT p FROM Product p
+    LEFT JOIN p.seller s
     WHERE 
         (:query IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', :query, '%')))
         OR
         (:query IS NULL OR LOWER(p.category.name) LIKE LOWER(CONCAT('%', :query, '%')))
+        OR
+        (:query IS NULL OR LOWER(s.bussinessDetails.bussinessName) LIKE LOWER(CONCAT('%', :query, '%')))
 """)
-    List<Product> searchProduct(@Param("query") String query);
+    List<Product> searchProduct(@Param("query") String query, Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Product p where p.id = :id")

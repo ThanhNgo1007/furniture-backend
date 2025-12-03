@@ -1,17 +1,11 @@
 package com.furniture.service.impl;
 
-import com.furniture.exceptions.ProductException;
-import com.furniture.modal.Category;
-import com.furniture.modal.Product;
-import com.furniture.modal.Seller;
-import com.furniture.repository.CategoryRepository;
-import com.furniture.repository.ProductRepository;
-import com.furniture.request.CreateProductRequest;
-import com.furniture.service.ProductService;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.Predicate;
-import lombok.RequiredArgsConstructor;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,12 +14,18 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import com.furniture.exceptions.ProductException;
+import com.furniture.modal.Category;
+import com.furniture.modal.Product;
+import com.furniture.modal.Seller;
+import com.furniture.repository.CategoryRepository;
+import com.furniture.repository.ProductRepository;
+import com.furniture.request.CreateProductRequest;
+import com.furniture.service.ProductService;
+
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +43,7 @@ public class ProductServiceImpl implements ProductService {
         if (category1 == null) {
             Category category = new Category();
             category.setCategoryId(req.getCategory());
+            category.setName(generateCategoryName(req.getCategory()));
             category.setLevel(1);
             category1 = categoryRepository.save(category);
         }
@@ -52,6 +53,7 @@ public class ProductServiceImpl implements ProductService {
         if (category2 == null) {
             Category category = new Category();
             category.setCategoryId(req.getCategory2());
+            category.setName(generateCategoryName(req.getCategory2()));
             category.setLevel(2);
             category.setParentCategory(category1);
             category2 = categoryRepository.save(category);
@@ -62,6 +64,7 @@ public class ProductServiceImpl implements ProductService {
         if (category3 == null) {
             Category category = new Category();
             category.setCategoryId(req.getCategory3());
+            category.setName(generateCategoryName(req.getCategory3()));
             category.setLevel(3);
             category.setParentCategory(category2);
             category3 = categoryRepository.save(category);
@@ -82,6 +85,30 @@ public class ProductServiceImpl implements ProductService {
 
         return productRepository.save(product);
 
+    }
+
+    private String generateCategoryName(String categoryId) {
+        if (categoryId == null || categoryId.isEmpty()) {
+            return "";
+        }
+
+        // Convert "dining-tables" to "Dining Tables"
+        // Convert "sofas" to "Sofas"
+        String[] words = categoryId.split("-");
+        StringBuilder name = new StringBuilder();
+
+        for (String word : words) {
+            if (word.length() > 0) {
+                // Capitalize first letter
+                name.append(Character.toUpperCase(word.charAt(0)));
+                if (word.length() > 1) {
+                    name.append(word.substring(1));
+                }
+                name.append(" ");
+            }
+        }
+
+        return name.toString().trim();
     }
 
 
@@ -123,7 +150,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<Product> searchProducts(String query) {
-        return productRepository.searchProduct(query);
+        // Limit search results to 10 items for performance optimization
+        // This prevents fetching thousands of records for broad queries
+        return productRepository.searchProduct(query, PageRequest.of(0, 10));
     }
 
     @Override
@@ -134,7 +163,22 @@ public class ProductServiceImpl implements ProductService {
 
             if (category != null && !category.isEmpty()) {
                 Join<Product, Category> categoryJoin = root.join("category");
-                predicates.add(criteriaBuilder.equal(categoryJoin.get("categoryId"), category));
+                // Check both categoryId and name to be flexible
+                predicates.add(criteriaBuilder.or(
+                    criteriaBuilder.equal(categoryJoin.get("categoryId"), category),
+                    criteriaBuilder.equal(categoryJoin.get("name"), category)
+                ));
+            }
+
+            // Filter by Brand (Seller Business Name)
+            if (brand != null && !brand.isEmpty()) {
+                Join<Product, Seller> sellerJoin = root.join("seller");
+                // Access embedded BussinessDetails -> bussinessName
+                // Note: The field name in BussinessDetails class is 'bussinessName' (double s)
+                predicates.add(criteriaBuilder.equal(
+                    sellerJoin.get("bussinessDetails").get("bussinessName"), 
+                    brand
+                ));
             }
 
             // --- SỬA LẠI LOGIC LỌC MÀU ---

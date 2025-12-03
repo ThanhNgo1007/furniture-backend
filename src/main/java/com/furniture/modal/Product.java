@@ -13,8 +13,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,6 +27,11 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name = "product", indexes = {
+    @Index(name = "idx_product_price", columnList = "sellingPrice"),
+    @Index(name = "idx_product_discount", columnList = "discountPercent"),
+    @Index(name = "idx_product_created_at", columnList = "createdAt")
+})
 public class Product {
 
     @Id

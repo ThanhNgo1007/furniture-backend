@@ -1,7 +1,15 @@
 package com.furniture.modal;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
@@ -17,6 +25,8 @@ public class Deal {
 
     private Integer discount;
 
+    private String image;
+
     @OneToOne
-    private HomeCategory category;
+    private Category category;
 }
