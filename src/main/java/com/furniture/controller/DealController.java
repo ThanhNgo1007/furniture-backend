@@ -59,12 +59,18 @@ public class DealController {
     }
 
     @DeleteMapping("/admin/deals/{id}")
-    public ResponseEntity<ApiResponse> deleteDeal(@PathVariable Long id) throws Exception {
+    public ResponseEntity<ApiResponse> deleteDeal(@PathVariable Long id) {
         dealService.deleteDeal(id);
+        ApiResponse res = new ApiResponse();
+        res.setMessage("Deal deleted successfully");
+        return new ResponseEntity<>(res, HttpStatus.ACCEPTED);
+    }
 
-        ApiResponse apiResponse = new ApiResponse();
-        apiResponse.setMessage("Deal deleted successfully");
-
-        return new ResponseEntity<>(apiResponse, HttpStatus.ACCEPTED);
+    @DeleteMapping("/admin/deals/bulk")
+    public ResponseEntity<ApiResponse> bulkDeleteDeals(@RequestBody List<Long> ids) {
+        dealService.bulkDeleteDeals(ids);
+        ApiResponse res = new ApiResponse();
+        res.setMessage(ids.size() + " deal(s) deleted successfully");
+        return ResponseEntity.ok(res);
     }
 }

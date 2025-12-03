@@ -54,6 +54,12 @@ public class AppConfig {
                         .requestMatchers("/api/payment/**").permitAll()
                         .requestMatchers("/api/products/*/reviews").permitAll()
 
+                        // Public API endpoints - Allow anonymous access
+                        .requestMatchers("/api/deals").permitAll()
+                        .requestMatchers("/api/home-categories").permitAll()
+                        .requestMatchers("/api/products").permitAll()
+                        .requestMatchers("/api/products/**").permitAll()
+
                         // ===== 2. PROTECTED ENDPOINTS (Yêu cầu authentication) =====
 
                         // Tất cả API khác của customer

@@ -1,15 +1,14 @@
 package com.furniture.service;
 
-import com.furniture.modal.Deal;
-import org.springframework.data.repository.CrudRepository;
-
 import java.util.List;
+
+import com.furniture.modal.Deal;
 
 public interface DealService {
     List<Deal> getDeals();
     Deal createDeal(Deal deal);
     Deal updateDeal(Deal deal, Long id) throws Exception;
-    void deleteDeal(Long id) throws Exception;
-
+    void deleteDeal(Long id);
+    void bulkDeleteDeals(List<Long> ids);
 
 }

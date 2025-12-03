@@ -59,7 +59,7 @@ public class OrderController {
     // --------------------------------
 
     @PostMapping()
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasRole('ROLE_CUSTOMER')")
     public ResponseEntity<PaymentLinkResponse> createOrderHandler(
             @RequestBody Address shippingAddress,
             @RequestParam PaymentMethod paymentMethod,
@@ -130,7 +130,7 @@ public class OrderController {
     }
 
     @GetMapping("/{orderId}")
-    @PreAuthorize("hasRole('ROLE_USER')")
+    @PreAuthorize("hasRole('ROLE_CUSTOMER')")
     public  ResponseEntity<Order> getOrderById(
             @PathVariable Long orderId,
             @RequestHeader("Authorization") String jwt

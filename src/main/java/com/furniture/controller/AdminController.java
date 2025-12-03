@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api")
+@RequestMapping("/api/admin")
 public class AdminController {
 
     private final SellerService sellerService;
@@ -37,6 +37,24 @@ public class AdminController {
 
         Seller updatedSeller = sellerService.updateSellerAccountStatus(id, status);
 
+        return ResponseEntity.ok(updatedSeller);
+    }
+
+    // Admin Seller Management Endpoints
+    @GetMapping("/sellers")
+    public ResponseEntity<List<Seller>> getAllSellers(
+            @RequestParam(required = false) AccountStatus status
+    ) {
+        List<Seller> sellers = sellerService.getAllSellers(status);
+        return ResponseEntity.ok(sellers);
+    }
+
+    @PatchMapping("/sellers/{id}/status")
+    public ResponseEntity<Seller> updateSellerAccountStatus(
+            @PathVariable Long id,
+            @RequestParam AccountStatus status
+    ) throws Exception {
+        Seller updatedSeller = sellerService.updateSellerAccountStatus(id, status);
         return ResponseEntity.ok(updatedSeller);
     }
 
