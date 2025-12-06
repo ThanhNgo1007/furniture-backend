@@ -26,6 +26,9 @@ public class ChatMessageResponse {
     private Boolean isRead;
     
     @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime readAt;
+    
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
 
     public static ChatMessageResponse fromMessage(Message message, String senderName) {
@@ -38,6 +41,7 @@ public class ChatMessageResponse {
                 .content(message.getContent())
                 .messageType(message.getMessageType())
                 .isRead(message.getIsRead())
+                .readAt(message.getReadAt())
                 .createdAt(message.getCreatedAt())
                 .build();
     }

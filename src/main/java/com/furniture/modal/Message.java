@@ -51,6 +51,8 @@ public class Message {
     @lombok.Builder.Default
     private Boolean isRead = false;
 
+    private LocalDateTime readAt;
+
     private LocalDateTime createdAt;
 
     @PrePersist

@@ -34,6 +34,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
         if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
             List<String> authHeaders = accessor.getNativeHeader("Authorization");
+
             
             if (authHeaders != null && !authHeaders.isEmpty()) {
                 String jwt = authHeaders.getFirst().replace("Bearer ", "");
@@ -46,14 +47,19 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                             .parseClaimsJws(jwt)
                             .getBody();
 
-                    String email = claims.getSubject();
+                    // Email is stored in custom "email" claim, not in subject
+                    String email = claims.get("email", String.class);
+
                     
                     // Set user principal (you can extend this to fetch full user details)
                     accessor.setUser(new UsernamePasswordAuthenticationToken(email, null, List.of()));
+
                 } catch (Exception e) {
-                    System.err.println("WebSocket authentication failed: " + e.getMessage());
+
                     return null;
                 }
+            } else {
+                System.out.println("[WebSocket Auth] No Authorization header found in CONNECT frame");
             }
         }
 

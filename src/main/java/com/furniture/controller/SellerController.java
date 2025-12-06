@@ -67,7 +67,7 @@ public class SellerController {
         VerificationCode verificationCode = verificationCodeRepository.findByOtp(otp);
 
         if (verificationCode == null || !verificationCode.getOtp().equals(otp)) {
-            throw new Exception("wrong otp ...");
+            throw new Exception("Mã OTP không đúng. Vui lòng kiểm tra lại.");
         }
 
         Seller seller = sellerService.verifyEmail(verificationCode.getEmail(), otp);

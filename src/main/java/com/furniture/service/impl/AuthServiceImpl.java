@@ -1,5 +1,21 @@
 package com.furniture.service.impl;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.furniture.config.JwtProvider;
 import com.furniture.domain.AccountStatus;
 import com.furniture.domain.USER_ROLE;
@@ -12,27 +28,13 @@ import com.furniture.repository.SellerRepository;
 import com.furniture.repository.UserRepository;
 import com.furniture.repository.VerificationCodeRepository;
 import com.furniture.request.LoginRequest;
-import com.furniture.response.AuthResponse;
 import com.furniture.request.SignupRequest;
+import com.furniture.response.AuthResponse;
 import com.furniture.service.AuthService;
 import com.furniture.service.EmailService;
 import com.furniture.utils.OtpUtil;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -102,7 +104,7 @@ public class AuthServiceImpl implements AuthService {
         VerificationCode verificationCode = verificationCodeRepository.findByEmail(req.getEmail());
 
         if (verificationCode == null || !verificationCode.getOtp().equals(req.getOtp())) {
-            throw new Exception("wrong otp...");
+            throw new Exception("Mã OTP không đúng. Vui lòng kiểm tra lại.");
         }
 
         User user = userRepository.findByEmail(req.getEmail());
@@ -198,7 +200,7 @@ public class AuthServiceImpl implements AuthService {
         VerificationCode verificationCode = verificationCodeRepository.findByEmail(actualEmail);
 
         if (verificationCode == null || !verificationCode.getOtp().equals(otp)) {
-            throw new BadCredentialsException("wrong otp");
+            throw new BadCredentialsException("Đăng nhập không thành công. Mã OTP không đúng.");
         }
 
         // 4. Kiểm tra hết hạn

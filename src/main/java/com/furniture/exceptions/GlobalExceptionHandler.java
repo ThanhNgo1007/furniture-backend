@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -41,6 +42,24 @@ public class GlobalExceptionHandler {
     }
     
     /**
+     * Handle authentication errors (wrong OTP, invalid credentials)
+     */
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+        
+        ErrorResponse response = new ErrorResponse(
+            HttpStatus.UNAUTHORIZED.value(),
+            ex.getMessage(), // Use the actual exception message (e.g., "Đăng nhập không thành công. Mã OTP không đúng.")
+            errors,
+            LocalDateTime.now()
+        );
+        
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+    
+    /**
      * Handle generic exceptions (optional - for better error handling)
      */
     @ExceptionHandler(Exception.class)
@@ -50,7 +69,7 @@ public class GlobalExceptionHandler {
         
         ErrorResponse response = new ErrorResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            "An error occurred",
+            "Đã xảy ra lỗi. Vui lòng thử lại sau.",
             errors,
             LocalDateTime.now()
         );

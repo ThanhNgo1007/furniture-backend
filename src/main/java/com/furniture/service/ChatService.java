@@ -161,6 +161,8 @@ public class ChatService {
 
     @Transactional
     public void markMessagesAsRead(Long conversationId, Long readerId, String readerType) {
+        System.out.println("[Chat] markMessagesAsRead called: conversationId=" + conversationId + ", readerId=" + readerId + ", readerType=" + readerType);
+        
         Conversation conversation = findConversationById(conversationId);
         
         // Reset unread count
@@ -171,8 +173,23 @@ public class ChatService {
         }
         conversationRepository.save(conversation);
         
-        // Also mark messages as read in DB if needed
-        messageRepository.markAllAsRead(conversationId, readerId);
+        // Mark messages as read in DB - marks messages from the OTHER party as read
+        // e.g., when SELLER reads, mark USER's messages as read (senderType != "SELLER")
+        messageRepository.markAllAsRead(conversationId, readerType);
+        System.out.println("[Chat] Messages marked as read in DB for senderType != " + readerType);
+        
+        // Broadcast read receipt to the conversation topic so the sender knows their messages were read
+        try {
+            java.util.Map<String, Object> readReceipt = new java.util.HashMap<>();
+            readReceipt.put("type", "READ_RECEIPT");
+            readReceipt.put("conversationId", conversationId);
+            readReceipt.put("readBy", readerType);
+            readReceipt.put("readAt", java.time.LocalDateTime.now().toString());
+            messagingTemplate.convertAndSend("/topic/conversation/" + conversationId, readReceipt);
+            System.out.println("[Chat] Read receipt broadcast sent to /topic/conversation/" + conversationId);
+        } catch (Exception e) {
+            System.err.println("Error broadcasting read receipt: " + e.getMessage());
+        }
     }
 
     public Long getUserUnreadCount(Long userId) {

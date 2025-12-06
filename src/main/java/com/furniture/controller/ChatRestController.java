@@ -66,17 +66,23 @@ public class ChatRestController {
             // Convert to response DTOs
             List<ConversationResponse> response = conversations.stream()
                     .map(conv -> {
-                        // Get last message preview
+                        // Get last message preview and sender type
                         List<Message> messages = chatService.getAllMessages(conv.getId());
-                        String lastMessagePreview = messages.isEmpty() ? "" : 
-                                messages.getLast().getContent();
+                        String lastMessagePreview = "";
+                        String lastMessageSenderType = null;
+                        
+                        if (!messages.isEmpty()) {
+                            Message lastMessage = messages.getLast();
+                            lastMessagePreview = lastMessage.getContent();
+                            lastMessageSenderType = lastMessage.getSenderType();
+                        }
                         
                         // Truncate if too long
                         if (lastMessagePreview.length() > 50) {
                             lastMessagePreview = lastMessagePreview.substring(0, 47) + "...";
                         }
                         
-                        return ConversationResponse.fromConversation(conv, lastMessagePreview);
+                        return ConversationResponse.fromConversation(conv, lastMessagePreview, lastMessageSenderType);
                     })
                     .collect(Collectors.toList());
 

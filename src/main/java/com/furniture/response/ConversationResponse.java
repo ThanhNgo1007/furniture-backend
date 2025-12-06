@@ -31,6 +31,7 @@ public class ConversationResponse {
     private String parentCategoryId;
     
     private String lastMessagePreview;
+    private String lastMessageSenderType;
     private LocalDateTime lastMessageAt;
     private Integer unreadCountUser;
     private Integer unreadCountSeller;
@@ -69,7 +70,7 @@ public class ConversationResponse {
         this.lastMessagePreview = "Bắt đầu trò chuyện";
     }
 
-    public static ConversationResponse fromConversation(Conversation conversation, String lastMessagePreview) {
+    public static ConversationResponse fromConversation(Conversation conversation, String lastMessagePreview, String lastMessageSenderType) {
         return ConversationResponse.builder()
                 .id(conversation.getId())
                 .userId(conversation.getUser().getId())
@@ -87,6 +88,7 @@ public class ConversationResponse {
                 .parentCategoryId(conversation.getProduct() != null && conversation.getProduct().getCategory() != null && conversation.getProduct().getCategory().getParentCategory() != null
                     ? conversation.getProduct().getCategory().getParentCategory().getCategoryId() : null)
                 .lastMessagePreview(lastMessagePreview)
+                .lastMessageSenderType(lastMessageSenderType)
                 .lastMessageAt(conversation.getLastMessageAt())
                 .unreadCountUser(conversation.getUnreadCountUser())
                 .unreadCountSeller(conversation.getUnreadCountSeller())

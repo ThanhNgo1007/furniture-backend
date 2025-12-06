@@ -32,12 +32,13 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             @Param("recipientId") Long recipientId
     );
 
-    // Mark all messages as read for a recipient
+    // Mark all messages as read for a recipient and set readAt timestamp
+    // Now checks sender_type since User and Seller can have the same ID in different tables
     @Modifying
-    @Query("UPDATE Message m SET m.isRead = true WHERE m.conversation.id = :conversationId " +
-           "AND m.senderId != :recipientId AND m.isRead = false")
+    @Query("UPDATE Message m SET m.isRead = true, m.readAt = CURRENT_TIMESTAMP WHERE m.conversation.id = :conversationId " +
+           "AND m.senderType != :recipientType AND m.isRead = false")
     void markAllAsRead(
             @Param("conversationId") Long conversationId,
-            @Param("recipientId") Long recipientId
+            @Param("recipientType") String recipientType
     );
 }

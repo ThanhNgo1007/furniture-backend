@@ -8,12 +8,10 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import com.furniture.modal.Conversation;
-import com.furniture.modal.Message;
 import com.furniture.modal.Order;
 import com.furniture.modal.Seller;
 import com.furniture.modal.User;
 import com.furniture.request.ChatMessageRequest;
-import com.furniture.response.ChatMessageResponse;
 import com.furniture.service.ChatService;
 import com.furniture.service.SellerService;
 import com.furniture.service.UserService;
@@ -37,10 +35,11 @@ public class ChatController {
     public void sendMessage(@Payload ChatMessageRequest request, Principal principal) {
         try {
             String email = principal.getName();
+            System.out.println("[Chat] sendMessage called with email: " + email + ", conversationId: " + request.getConversationId());
             
             // Determine if sender is User or Seller
             User user = null;
-            Seller seller;
+            Seller seller = null;
             String senderType;
             Long senderId;
             
@@ -48,10 +47,20 @@ public class ChatController {
                 user = userService.findUserByEmail(email);
                 senderType = "USER";
                 senderId = user.getId();
-            } catch (Exception e) {
-                seller = sellerService.getSellerByEmail(email);
-                senderType = "SELLER";
-                senderId = seller.getId();
+                System.out.println("[Chat] Sender identified as USER: " + senderId);
+            } catch (Exception userEx) {
+                System.out.println("[Chat] Not a user, checking if seller: " + userEx.getMessage());
+                try {
+                    seller = sellerService.getSellerByEmail(email);
+                    senderType = "SELLER";
+                    senderId = seller.getId();
+                    System.out.println("[Chat] Sender identified as SELLER: " + senderId);
+                } catch (Exception sellerEx) {
+                    System.err.println("[Chat] Failed to identify sender with email: " + email);
+                    System.err.println("[Chat] User error: " + userEx.getMessage());
+                    System.err.println("[Chat] Seller error: " + sellerEx.getMessage());
+                    throw new RuntimeException("Could not identify sender: " + email);
+                }
             }
 
             // Get or create conversation
@@ -76,30 +85,19 @@ public class ChatController {
                 conversation = chatService.getOrCreateConversation(user, seller, order, null);
             }
 
-            // Save message to database (this also broadcasts to /topic/conversation/{id})
-            Message message = chatService.saveMessage(
+            // Save message to database (this broadcasts to /topic/conversation/{id} for all participants)
+            chatService.saveMessage(
                 conversation,
                 senderId,
                 senderType,
                 request.getContent(),
                 request.getMessageType()
             );
-
-            // Get sender name
-            String senderName = chatService.getSenderName(senderId, senderType);
-
-            // Create response
-            ChatMessageResponse response = ChatMessageResponse.fromMessage(message, senderName);
-
-            // Also send back to sender for confirmation
-            messagingTemplate.convertAndSendToUser(
-                email,
-                "/queue/messages",
-                response
-            );
+            // Message is already broadcast via topic in saveMessage(), no need to send again
 
         } catch (Exception e) {
             System.err.println("Error sending message: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
