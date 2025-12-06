@@ -40,7 +40,7 @@ public class ChatController {
             
             // Determine if sender is User or Seller
             User user = null;
-            Seller seller = null;
+            Seller seller;
             String senderType;
             Long senderId;
             
@@ -71,9 +71,7 @@ public class ChatController {
                 }
                 
                 Order order = null;
-                if (request.getOrderId() != null) {
-                    // TODO: Fetch order by ID if needed
-                }
+                // Note: Order handling can be added here if needed in the future
                 
                 conversation = chatService.getOrCreateConversation(user, seller, order, null);
             }
@@ -102,7 +100,6 @@ public class ChatController {
 
         } catch (Exception e) {
             System.err.println("Error sending message: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 

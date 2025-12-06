@@ -35,7 +35,7 @@ public class ConversationResponse {
     private Integer unreadCountUser;
     private Integer unreadCountSeller;
 
-    public ConversationResponse(Conversation conversation, Long currentUserId) {
+    public ConversationResponse(Conversation conversation) {
         this.id = conversation.getId();
         this.userId = conversation.getUser().getId();
         this.userName = conversation.getUser().getFullName();
@@ -51,7 +51,7 @@ public class ConversationResponse {
             this.productId = conversation.getProduct().getId();
             this.productTitle = conversation.getProduct().getTitle();
             if (conversation.getProduct().getImages() != null && !conversation.getProduct().getImages().isEmpty()) {
-                this.productImage = conversation.getProduct().getImages().get(0);
+                this.productImage = conversation.getProduct().getImages().getFirst();
             }
             if (conversation.getProduct().getCategory() != null) {
                 this.categoryId = conversation.getProduct().getCategory().getCategoryId();
@@ -81,7 +81,7 @@ public class ConversationResponse {
                 .productId(conversation.getProduct() != null ? conversation.getProduct().getId() : null)
                 .productTitle(conversation.getProduct() != null ? conversation.getProduct().getTitle() : null)
                 .productImage(conversation.getProduct() != null && !conversation.getProduct().getImages().isEmpty() 
-                    ? conversation.getProduct().getImages().get(0) : null)
+                    ? conversation.getProduct().getImages().getFirst() : null)
                 .categoryId(conversation.getProduct() != null && conversation.getProduct().getCategory() != null 
                     ? conversation.getProduct().getCategory().getCategoryId() : null)
                 .parentCategoryId(conversation.getProduct() != null && conversation.getProduct().getCategory() != null && conversation.getProduct().getCategory().getParentCategory() != null

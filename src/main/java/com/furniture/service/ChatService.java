@@ -76,12 +76,12 @@ public class ChatService {
                 ProductInfo info = new ProductInfo(
                     product.getId(),
                     product.getTitle(),
-                    (product.getImages() != null && !product.getImages().isEmpty()) ? product.getImages().get(0) : ""
+                    (product.getImages() != null && !product.getImages().isEmpty()) ? product.getImages().getFirst() : ""
                 );
                 String productContent = mapper.writeValueAsString(info);
                 saveMessage(conversation, user.getId(), "USER", productContent, "PRODUCT");
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println("Error creating product message: " + e.getMessage());
             }
         }
 
@@ -97,7 +97,7 @@ public class ChatService {
     }
 
     /**
-     * Save a new message and update conversation
+     * Save a message to the database and broadcast it
      */
     @Transactional
     public Message saveMessage(Conversation conversation, Long senderId, String senderType, 
@@ -109,11 +109,12 @@ public class ChatService {
                 .content(content)
                 .messageType(messageType)
                 .isRead(false)
+                .createdAt(LocalDateTime.now())
                 .build();
 
         Message savedMessage = messageRepository.save(message);
 
-        // Update conversation's last message time and unread count
+        // Update conversation's last message time
         conversation.setLastMessageAt(LocalDateTime.now());
         
         if ("USER".equals(senderType)) {
@@ -130,7 +131,7 @@ public class ChatService {
             com.furniture.response.ChatMessageResponse response = com.furniture.response.ChatMessageResponse.fromMessage(savedMessage, senderName);
             messagingTemplate.convertAndSend("/topic/conversation/" + conversation.getId(), response);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Error broadcasting message: " + e.getMessage());
         }
 
         return savedMessage;

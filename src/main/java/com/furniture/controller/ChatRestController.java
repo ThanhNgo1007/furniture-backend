@@ -69,7 +69,7 @@ public class ChatRestController {
                         // Get last message preview
                         List<Message> messages = chatService.getAllMessages(conv.getId());
                         String lastMessagePreview = messages.isEmpty() ? "" : 
-                                messages.get(messages.size() - 1).getContent();
+                                messages.getLast().getContent();
                         
                         // Truncate if too long
                         if (lastMessagePreview.length() > 50) {
@@ -140,7 +140,7 @@ public class ChatRestController {
      */
     @PostMapping("/conversations")
     @PreAuthorize("hasRole('CUSTOMER')")
-    public ResponseEntity<ConversationResponse> createConversation(
+    public ResponseEntity<?> createConversation(
             @RequestHeader("Authorization") String jwt,
             @RequestParam Long sellerId,
             @RequestParam(required = false) Long orderId,
@@ -166,11 +166,11 @@ public class ChatRestController {
             }
 
             Conversation conversation = chatService.getOrCreateConversation(user, seller, order, product);
-            ConversationResponse response = new ConversationResponse(conversation, user.getId());
+            ConversationResponse response = new ConversationResponse(conversation);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error creating conversation: " + e.getMessage());
         }
     }
 
