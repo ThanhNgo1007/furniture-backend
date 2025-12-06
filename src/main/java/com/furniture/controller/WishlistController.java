@@ -1,22 +1,29 @@
 package com.furniture.controller;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.furniture.modal.Product;
 import com.furniture.modal.User;
 import com.furniture.modal.Wishlist;
-import com.furniture.repository.WishlistRepository;
 import com.furniture.service.ProductService;
 import com.furniture.service.UserService;
 import com.furniture.service.WishlistService;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/wishlist")
 public class WishlistController {
 
-    private final WishlistRepository wishlistRepository;
+
     private final UserService userService;
     private final WishlistService wishlistService;
     private final ProductService productService;

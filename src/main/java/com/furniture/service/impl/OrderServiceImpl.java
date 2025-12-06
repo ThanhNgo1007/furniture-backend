@@ -31,6 +31,7 @@ import com.furniture.service.OrderService;
 import com.furniture.service.TransactionService;
 import com.furniture.utils.VNPayUtil;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -45,7 +46,7 @@ public class OrderServiceImpl implements OrderService {
     private final PaymentOrderRepository paymentOrderRepository;
 
     @Override
-    public Set<Order> createOrder(User user, Address shippingAddress, Cart cart) {
+    public Set<Order> createOrder(User user, @NonNull Address shippingAddress, Cart cart) {
 
         Address address = addressRepository.save(shippingAddress);
 
@@ -113,7 +114,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order findOrderById(Long id) throws Exception {
+    public Order findOrderById(@NonNull Long id) throws Exception {
         return orderRepository.findById(id).orElseThrow(()->
                 new Exception("Order not found ..."));
     }
@@ -136,20 +137,18 @@ public class OrderServiceImpl implements OrderService {
         // LOGIC MỚI: Xử lý khi giao hàng thành công
         if (orderStatus.equals(OrderStatus.DELIVERED)) {
 
-            // Lấy PaymentOrder từ repository thay vì từ order.getPaymentOrder()
-            PaymentOrder paymentOrder = paymentOrderRepository.findByOrderId(order.getId())
-                    .orElse(null);
-
             // 1. Xử lý COD: Cập nhật trạng thái thanh toán
-            if (paymentOrder != null && paymentOrder.getPaymentMethod().equals(PaymentMethod.COD)) {
-
-                // Update status trong Order
+            // Check directly on Order's PaymentDetails (more reliable than PaymentOrder for COD)
+            if (order.getPaymentDetails().getPaymentMethod().equals(PaymentMethod.COD)) {
                 order.getPaymentDetails().setStatus(PaymentStatus.COMPLETED);
                 order.setPaymentStatus(PaymentStatus.COMPLETED);
 
-                // Update status trong PaymentOrder (Bảng cha)
-                paymentOrder.setStatus(PaymentOrderStatus.SUCCESS);
-                paymentOrderRepository.save(paymentOrder);
+                // Update status trong PaymentOrder (Bảng cha) nếu có
+                PaymentOrder paymentOrder = paymentOrderRepository.findByOrderId(order.getId()).orElse(null);
+                if (paymentOrder != null) {
+                    paymentOrder.setStatus(PaymentOrderStatus.SUCCESS);
+                    paymentOrderRepository.save(paymentOrder);
+                }
             }
 
             // 2. Tạo Transaction cho Seller
@@ -157,6 +156,9 @@ public class OrderServiceImpl implements OrderService {
             if (order.getPaymentDetails().getStatus().equals(PaymentStatus.COMPLETED)) {
                 transactionService.createTransaction(order);
             }
+
+            // 3. Cập nhật ngày giao hàng thực tế
+            order.setDeliveryDate(java.time.LocalDateTime.now());
         }
 
         return orderRepository.save(order);
@@ -197,7 +199,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderItem getOrderItemById(Long id) throws Exception {
+    public OrderItem getOrderItemById(@NonNull Long id) throws Exception {
         return orderItemRepository.findById(id).orElseThrow(()->
                 new Exception("Order item not found with id "));
     }

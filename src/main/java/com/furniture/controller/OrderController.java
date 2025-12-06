@@ -25,8 +25,6 @@ import com.furniture.modal.Order;
 import com.furniture.modal.OrderItem;
 import com.furniture.modal.PaymentOrder;
 import com.furniture.modal.Product;
-import com.furniture.modal.Seller;
-import com.furniture.modal.SellerReport;
 import com.furniture.modal.User;
 import com.furniture.repository.OrderRepository;
 import com.furniture.repository.ProductRepository;
@@ -34,8 +32,6 @@ import com.furniture.response.PaymentLinkResponse;
 import com.furniture.service.CartService;
 import com.furniture.service.OrderService;
 import com.furniture.service.PaymentService;
-import com.furniture.service.SellerReportService;
-import com.furniture.service.SellerService;
 import com.furniture.service.UserService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -49,8 +45,6 @@ public class OrderController {
     private final OrderService orderService;
     private final UserService userService;
     private final CartService cartService;
-    private final SellerService sellerService;
-    private final SellerReportService sellerReportService;
     private final PaymentService paymentService;
 
     // --- 1. THÊM 2 REPOSITORY NÀY ---
@@ -167,12 +161,9 @@ public class OrderController {
         User user = userService.findUserByJwtToken(jwt);
         Order order = orderService.cancelOrder(orderId, user);
 
-        Seller seller = sellerService.getSellerById(order.getSellerId());
-        SellerReport report = sellerReportService.getSellerReport(seller);
-
-        report.setCanceledOrders(report.getCanceledOrders() + 1);
-        report.setTotalRefunds(report.getTotalRefunds().add(order.getTotalSellingPrice()));
-        sellerReportService.updateSellerReport(report);
+        // ✅ REFACTORED: SellerReport (canceledOrders, totalRefunds) 
+        // will be updated by batch job every 5 minutes
+        // No immediate update needed
 
         return ResponseEntity.ok(order);
     }

@@ -12,13 +12,15 @@ import lombok.Data;
 public class CreateReviewRequest {
 
     @NotBlank(message = "Review text is required")
-    @Size(min = 10, max = 1000, message = "Review must be between 10 and 1000 characters")
+    @Size(min = 10, max = 500, message = "Review must be between 10 and 500 characters")
     private String reviewText;
     
     @Min(value = 1, message = "Rating must be at least 1")
     @Max(value = 5, message = "Rating cannot exceed 5")
     private double reviewRating;
     
-    @Size(max = 5, message = "Maximum 5 images allowed")
+    @Size(max = 3, message = "Maximum 3 images allowed")
     private List<String> productImages;
+
+    private Long orderId;
 }

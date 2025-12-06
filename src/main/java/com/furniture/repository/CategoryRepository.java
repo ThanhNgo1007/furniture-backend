@@ -1,8 +1,8 @@
 package com.furniture.repository;
 
-import com.furniture.modal.Category;
-import jakarta.validation.constraints.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.furniture.modal.Category;
 
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 

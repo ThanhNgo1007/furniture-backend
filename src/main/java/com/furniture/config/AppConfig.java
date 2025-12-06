@@ -60,6 +60,7 @@ public class AppConfig {
                         .requestMatchers("/api/products").permitAll()
                         .requestMatchers("/api/products/**").permitAll()
 
+
                         // ===== 2. PROTECTED ENDPOINTS (Yêu cầu authentication) =====
 
                         // Tất cả API khác của customer

@@ -50,5 +50,22 @@ public class Address {
     @JsonProperty("mobile")
     @NotBlank(message = "Mobile number is required")
     @Pattern(regexp = "^[0-9]{10}$", message = "Mobile number must be exactly 10 digits")
+    @Pattern(regexp = "^[0-9]{10}$", message = "Mobile number must be exactly 10 digits")
     private String mobile;
+
+    @JsonProperty("isDefault")
+    private boolean isDefault = false;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Address address = (Address) o;
+        return id != null && id.equals(address.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

@@ -1,8 +1,9 @@
 package com.furniture.repository;
 
-import com.furniture.modal.User;
-import com.furniture.modal.VerificationCode;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.furniture.modal.VerificationCode;
 
 public interface VerificationCodeRepository extends JpaRepository<VerificationCode, Long> {
 

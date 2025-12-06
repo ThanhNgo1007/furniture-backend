@@ -1,14 +1,17 @@
 // File: src/main/java/com/furniture/service/impl/CartItemServiceImpl.java
 package com.furniture.service.impl;
 
+import java.math.BigDecimal;
+
+import org.springframework.stereotype.Service;
+
 import com.furniture.modal.CartItem;
 import com.furniture.modal.User;
 import com.furniture.repository.CartItemRepository;
 import com.furniture.service.CartItemService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -60,7 +63,7 @@ public class CartItemServiceImpl implements CartItemService {
     }
 
     @Override
-    public CartItem findCartItemById(Long id) throws Exception {
+    public CartItem findCartItemById(@NonNull Long id) throws Exception {
         return cartItemRepository.findById(id).orElseThrow(() ->
                 new Exception("Cart item not found with id " + id));
     }

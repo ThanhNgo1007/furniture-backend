@@ -32,6 +32,7 @@ import com.furniture.service.PaymentService;
 import com.furniture.utils.VNPayUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -67,7 +68,7 @@ public class  PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public PaymentOrder getPaymentOrderById(Long orderId) throws Exception {
+    public PaymentOrder getPaymentOrderById(@NonNull Long orderId) throws Exception {
         return paymentOrderRepository.findById(orderId)
                 .orElseThrow(() -> new Exception("Payment order not found with id: " + orderId));
     }
@@ -167,7 +168,7 @@ public class  PaymentServiceImpl implements PaymentService {
 
         // Convert amount từ USD sang VND nếu cần
         // VNPay chỉ hỗ trợ VND, nên nếu website dùng USD thì phải convert
-        String defaultCurrency = vnPayConfig.getDefaultCurrency();
+        vnPayConfig.getDefaultCurrency();
 
         // VNPay yêu cầu amount phải nhân 100 (ví dụ: 1000 VND = 100000)
         long vnpAmount = paymentOrder.getAmount()

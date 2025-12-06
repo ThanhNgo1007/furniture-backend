@@ -25,6 +25,7 @@ import com.furniture.service.ProductService;
 
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -98,7 +99,7 @@ public class ProductServiceImpl implements ProductService {
         StringBuilder name = new StringBuilder();
 
         for (String word : words) {
-            if (word.length() > 0) {
+            if (!word.isEmpty()) {
                 // Capitalize first letter
                 name.append(Character.toUpperCase(word.charAt(0)));
                 if (word.length() > 1) {
@@ -130,12 +131,14 @@ public class ProductServiceImpl implements ProductService {
     public void deleteProduct(Long productId) throws ProductException {
 
         Product product = findProductById(productId);
-        productRepository.delete(product);
+        if (product != null) {
+            productRepository.delete(product);
+        }
 
     }
 
     @Override
-    public Product updateProduct(Long productId, Product product) throws ProductException {
+    public Product updateProduct(@NonNull Long productId, @NonNull Product product) throws ProductException {
         findProductById(productId);
         product.setId(productId);
 
@@ -143,7 +146,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public Product findProductById(Long productId) throws ProductException {
+    public Product findProductById(@NonNull Long productId) throws ProductException {
         return productRepository.findById(productId).orElseThrow(() ->
                 new ProductException("product not found with id"+productId));
     }

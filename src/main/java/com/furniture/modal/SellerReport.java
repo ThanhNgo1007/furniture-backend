@@ -1,8 +1,18 @@
 package com.furniture.modal;
 
-import jakarta.persistence.*;
-import lombok.*;
 import java.math.BigDecimal; // Nhớ import BigDecimal
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
@@ -19,23 +29,28 @@ public class SellerReport {
     @OneToOne
     private Seller seller;
 
-    // --- THAY ĐỔI TỪ ĐÂY ---
+    // Revenue & Earnings
+    private BigDecimal totalEarnings = BigDecimal.ZERO;  // Tổng doanh thu từ đơn DELIVERED
+    
+    private BigDecimal platformFee = BigDecimal.ZERO;    // Phí sàn (5% của totalEarnings)
+    
+    private BigDecimal netEarnings = BigDecimal.ZERO;    // Thu nhập ròng (totalEarnings - platformFee)
 
-    // Đổi Long -> BigDecimal và khởi tạo bằng ZERO
-    private BigDecimal totalEarnings = BigDecimal.ZERO;
+    // Sales & Orders
+    private Integer totalSales = 0;                      // Tổng số lượng sản phẩm bán được
 
-    private Integer totalSales = 0;
+    private Integer totalOrders = 0;                     // Tổng số đơn hàng
 
-    private BigDecimal totalRefunds = BigDecimal.ZERO;
+    private Integer canceledOrders = 0;                  // Số đơn bị hủy
 
-    private BigDecimal totalTax = BigDecimal.ZERO;
+    // Refunds & Tax
+    private BigDecimal totalRefunds = BigDecimal.ZERO;   // Tổng tiền từ đơn CANCELLED (chỉ để thống kê)
 
-    private BigDecimal netEarnings = BigDecimal.ZERO;
+    private BigDecimal totalTax = BigDecimal.ZERO;       // Thuế (nếu có)
 
-    // Các trường số lượng giữ nguyên Integer
-    private Integer totalOrders = 0;
-
-    private Integer canceledOrders = 0;
-
-    private Integer totalTransactions = 0;
+    // Transactions
+    private Integer totalTransactions = 0;               // Tổng số giao dịch
+    
+    // Metadata
+    private LocalDateTime lastUpdated;                   // Thời gian cập nhật lần cuối bởi batch job
 }

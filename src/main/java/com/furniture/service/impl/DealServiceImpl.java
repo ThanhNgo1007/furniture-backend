@@ -1,6 +1,7 @@
 package com.furniture.service.impl;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 
@@ -10,6 +11,7 @@ import com.furniture.repository.CategoryRepository;
 import com.furniture.repository.DealRepository;
 import com.furniture.service.DealService;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -25,9 +27,16 @@ public class DealServiceImpl implements DealService {
     }
 
     @Override
-    public Deal createDeal(Deal deal) {
+    public Deal createDeal(@NonNull Deal deal) {
 
-        Category category = categoryRepository.findById(deal.getCategory().getId()).orElse(null);
+        if (deal.getCategory() == null || deal.getCategory().getId() == null) {
+             throw new IllegalArgumentException("Category or Category ID cannot be null");
+        }
+        Category category = null; // Declare category here
+        if (deal.getCategory() != null && deal.getCategory().getId() != null) {
+             Long categoryId = deal.getCategory().getId();
+             category = categoryRepository.findById(Objects.requireNonNull(categoryId)).orElse(null);
+        }
         Deal newDeal = dealRepository.save(deal);
         newDeal.setCategory(category);
         newDeal.setDiscount(deal.getDiscount());
@@ -36,9 +45,13 @@ public class DealServiceImpl implements DealService {
     }
 
     @Override
-    public Deal updateDeal(Deal deal, Long id) throws Exception {
+    public Deal updateDeal(@NonNull Deal deal, @NonNull Long id) throws Exception {
         Deal existingDeal = dealRepository.findById(id).orElse(null);
-        Category category = categoryRepository.findById(deal.getCategory().getId()).orElse(null);
+        Category category = null;
+        if (deal.getCategory() != null && deal.getCategory().getId() != null) {
+            Long categoryId = deal.getCategory().getId();
+            category = categoryRepository.findById(Objects.requireNonNull(categoryId)).orElse(null);
+        }
 
         if (existingDeal != null) {
             if(deal.getDiscount() != null){
@@ -56,14 +69,16 @@ public class DealServiceImpl implements DealService {
     }
 
     @Override
-    public void deleteDeal(Long id) {
+    public void deleteDeal(@NonNull Long id) {
         Deal deal = dealRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Deal not found with id: " + id));
-        dealRepository.delete(deal);
+        if (deal != null) {
+            dealRepository.delete(deal);
+        }
     }
 
     @Override
-    public void bulkDeleteDeals(List<Long> ids) {
+    public void bulkDeleteDeals(@NonNull List<Long> ids) {
         dealRepository.deleteAllById(ids);
     }
 }

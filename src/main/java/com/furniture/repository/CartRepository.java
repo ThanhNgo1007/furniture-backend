@@ -1,9 +1,8 @@
 package com.furniture.repository;
 
-import com.furniture.modal.Cart;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query; // <-- 1. THÊM IMPORT NÀY
-import org.springframework.data.repository.query.Param; // <-- 2. THÊM IMPORT NÀY
+
+import com.furniture.modal.Cart;
 
 public interface CartRepository extends JpaRepository<Cart, Long> {
 

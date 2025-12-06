@@ -3,6 +3,7 @@ package com.furniture.service.impl;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -134,7 +135,10 @@ public class CartServiceImpl implements CartService {
 
         if (cart != null && !cart.getCartItemsInBag().isEmpty()) {
             // Xóa tất cả CartItem
-            cartItemRepository.deleteAll(cart.getCartItemsInBag());
+            Set<CartItem> items = cart.getCartItemsInBag();
+            if (items != null) {
+                cartItemRepository.deleteAll(items);
+            }
 
             // Clear collection
             cart.getCartItemsInBag().clear();

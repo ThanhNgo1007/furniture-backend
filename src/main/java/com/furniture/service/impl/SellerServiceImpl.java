@@ -15,6 +15,7 @@ import com.furniture.repository.AddressRepository;
 import com.furniture.repository.SellerRepository;
 import com.furniture.service.SellerService;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -34,12 +35,16 @@ public class SellerServiceImpl implements SellerService {
     }
 
     @Override
-    public Seller createSeller(Seller seller) throws Exception {
+    public Seller createSeller(@NonNull Seller seller) throws Exception {
         Seller sellerExist = sellerRepository.findByEmail(seller.getEmail());
         if (sellerExist != null) {
             throw new Exception("seller already exist, used different email");
         }
-        Address savedAddress = addressRepository.save(seller.getPickupAddress());
+        Address pickupAddress = seller.getPickupAddress();
+        if (pickupAddress == null) {
+            throw new Exception("Pickup address cannot be null");
+        }
+        Address savedAddress = addressRepository.save(pickupAddress);
 
         Seller newSeller = new Seller();
         newSeller.setEmail(seller.getEmail());
@@ -56,7 +61,7 @@ public class SellerServiceImpl implements SellerService {
     }
 
     @Override
-    public Seller getSellerById(Long id) throws SellerException {
+    public Seller getSellerById(@NonNull Long id) throws SellerException {
         return sellerRepository.findById(id)
                 .orElseThrow(() -> new SellerException("seller not found with id " + id));
     }
@@ -132,14 +137,19 @@ public class SellerServiceImpl implements SellerService {
             existingSeller.setMST(seller.getMST());
         }
 
-        return sellerRepository.save(existingSeller);
+        if (existingSeller != null) {
+            return sellerRepository.save(existingSeller);
+        }
+        throw new Exception("Seller not found");
     }
 
     @Override
-    public void deleteSeller(Long id) throws Exception {
+    public void deleteSeller(@NonNull Long id) throws Exception {
 
         Seller seller = getSellerById(id);
-        sellerRepository.delete(seller);
+        if (seller != null) {
+            sellerRepository.delete(seller);
+        }
 
     }
 

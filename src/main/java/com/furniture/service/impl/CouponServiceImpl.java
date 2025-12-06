@@ -1,5 +1,12 @@
 package com.furniture.service.impl;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Service;
+
 import com.furniture.modal.Cart;
 import com.furniture.modal.Coupon;
 import com.furniture.modal.User;
@@ -7,13 +14,9 @@ import com.furniture.repository.CartRepository;
 import com.furniture.repository.CouponRepository;
 import com.furniture.repository.UserRepository;
 import com.furniture.service.CouponService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -89,7 +92,7 @@ public class CouponServiceImpl implements CouponService {
     }
 
     @Override
-    public Coupon findCouponById(Long id) throws Exception {
+    public Coupon findCouponById(@NonNull Long id) throws Exception {
 
         return couponRepository.findById(id).orElseThrow(()->
                 new Exception("Coupon not found"));
@@ -97,7 +100,7 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public Coupon createCoupon(Coupon coupon) {
+    public Coupon createCoupon(@NonNull Coupon coupon) {
         return couponRepository.save(coupon);
     }
 
@@ -108,7 +111,7 @@ public class CouponServiceImpl implements CouponService {
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public void deleteCoupon(Long id) throws Exception {
+    public void deleteCoupon(@NonNull Long id) throws Exception {
         findCouponById(id);
         couponRepository.deleteById(id);
     }

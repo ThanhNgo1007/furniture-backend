@@ -2,8 +2,8 @@ package com.furniture.domain;
 
 public enum OrderStatus {
     PENDING,
-    PLACED,
     CONFIRMED,
+    PLACED,
     SHIPPED,
     DELIVERED,
     CANCELLED,

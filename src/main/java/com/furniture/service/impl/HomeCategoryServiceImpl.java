@@ -9,6 +9,7 @@ import com.furniture.modal.HomeCategory;
 import com.furniture.repository.HomeCategoryRepository;
 import com.furniture.service.HomeCategoryService;
 
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -18,7 +19,7 @@ public class HomeCategoryServiceImpl implements HomeCategoryService {
     private final HomeCategoryRepository homeCategoryRepository;
 
     @Override
-    public HomeCategory createHomeCategory(HomeCategory homeCategory) {
+    public HomeCategory createHomeCategory(@NonNull HomeCategory homeCategory) {
         // Set default values if not provided
         if(homeCategory.getIsActive() == null) {
             homeCategory.setIsActive(true);
@@ -30,7 +31,7 @@ public class HomeCategoryServiceImpl implements HomeCategoryService {
     }
 
     @Override
-    public List<HomeCategory> createCategories(List<HomeCategory> homeCategories) {
+    public List<HomeCategory> createCategories(@NonNull List<HomeCategory> homeCategories) {
         if(homeCategoryRepository.findAll().isEmpty()){
             // Set default values for each category
             for(HomeCategory category : homeCategories) {
@@ -47,7 +48,7 @@ public class HomeCategoryServiceImpl implements HomeCategoryService {
     }
 
     @Override
-    public HomeCategory updateHomeCategory(HomeCategory category, Long id) throws Exception {
+    public HomeCategory updateHomeCategory(@NonNull HomeCategory category, @NonNull Long id) throws Exception {
         HomeCategory existingCategory = homeCategoryRepository.findById(id)
                 .orElseThrow(() -> new Exception("Home Category not found"));
 
@@ -69,7 +70,10 @@ public class HomeCategoryServiceImpl implements HomeCategoryService {
         if(category.getIsActive() != null){
             existingCategory.setIsActive(category.getIsActive());
         }
-        return homeCategoryRepository.save(existingCategory);
+        if (existingCategory != null) {
+            return homeCategoryRepository.save(existingCategory);
+        }
+        throw new Exception("Home Category not found");
     }
 
     @Override
@@ -88,9 +92,11 @@ public class HomeCategoryServiceImpl implements HomeCategoryService {
     }
 
     @Override
-    public void deleteHomeCategory(Long id) throws Exception {
+    public void deleteHomeCategory(@NonNull Long id) throws Exception {
         HomeCategory category = homeCategoryRepository.findById(id)
                 .orElseThrow(() -> new Exception("Home Category not found"));
-        homeCategoryRepository.delete(category);
+        if (category != null) {
+            homeCategoryRepository.delete(category);
+        }
     }
 }

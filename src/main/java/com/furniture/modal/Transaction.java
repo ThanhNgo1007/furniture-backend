@@ -30,4 +30,6 @@ public class Transaction {
     private LocalDateTime date = LocalDateTime.now();
 
     private boolean paid;
+    
+    private LocalDateTime payoutDate;
 }

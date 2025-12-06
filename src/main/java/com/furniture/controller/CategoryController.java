@@ -1,13 +1,15 @@
 package com.furniture.controller;
 
-import com.furniture.modal.Category;
-import com.furniture.repository.CategoryRepository;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.furniture.modal.Category;
+import com.furniture.repository.CategoryRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor

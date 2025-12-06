@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.furniture.config.JwtProvider;
 import com.furniture.domain.AccountStatus;
 import com.furniture.exceptions.SellerException;
 import com.furniture.modal.Seller;
@@ -42,7 +41,7 @@ public class SellerController {
     private final VerificationCodeRepository verificationCodeRepository;
     private final AuthService authService;
     private final EmailService emailService;
-    private final JwtProvider jwtProvider;
+
     private final SellerReportService sellerReportService;
 
     @PostMapping("/login")
@@ -95,13 +94,12 @@ public class SellerController {
         // 3. Gửi Email chứa Link xác thực
         String subject = "AptDeco Seller Account Verification";
         // URL trỏ về Frontend (Vite thường chạy port 5173, hãy sửa nếu bạn dùng port khác)
-        String frontend_url = "http://localhost:5173/verify-seller/" + otp;
 
         String text = "Welcome to AptDeco! Click the link below to verify your seller account: ";
-        String link = "<a href=\"" + frontend_url + "\">Verify Account</a>"; // Hoặc gửi raw URL
+        // String link = "<a href=\"" + frontend_url + "\">Verify Account</a>"; // Hoặc gửi raw URL
 
         // Gửi email (Lưu ý: hàm sendVerificationOtpEmail cần hỗ trợ gửi text kèm link)
-        emailService.sendVerificationOtpEmail(savedSeller.getEmail(), otp, subject, text + frontend_url);
+        emailService.sendVerificationOtpEmail(savedSeller.getEmail(), otp, subject, text + "http://localhost:5173/verify-seller/" + otp);
 
         return new ResponseEntity<>(savedSeller, HttpStatus.CREATED);
     }
