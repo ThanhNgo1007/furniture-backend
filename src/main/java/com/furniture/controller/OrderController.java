@@ -123,6 +123,21 @@ public class OrderController {
         return new ResponseEntity<>(orders, HttpStatus.ACCEPTED);
     }
 
+    /**
+     * Cursor-based paginated user orders endpoint
+     */
+    @GetMapping("/user/paginated")
+    public ResponseEntity<com.furniture.response.CursorPageResponse<Order>> userOrderHistoryPaginated(
+            @RequestHeader("Authorization") String jwt,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int size
+    ) throws Exception {
+        User user = userService.findUserByJwtToken(jwt);
+        com.furniture.response.CursorPageResponse<Order> response = 
+            orderService.usersOrderHistoryPaginated(user.getId(), cursor, size);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/{orderId}")
     @PreAuthorize("hasRole('ROLE_CUSTOMER')")
     public  ResponseEntity<Order> getOrderById(

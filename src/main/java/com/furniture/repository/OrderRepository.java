@@ -141,4 +141,45 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT COALESCE(SUM(o.totalSellingPrice), 0) FROM Order o " +
            "WHERE o.paymentDetails.paymentMethod = :method AND o.orderStatus = com.furniture.domain.OrderStatus.DELIVERED")
     BigDecimal sumRevenueByPaymentMethod(@Param("method") com.furniture.domain.PaymentMethod method);
+
+    // ==================== CURSOR PAGINATION QUERIES ====================
+    
+    /**
+     * Cursor-based pagination for seller orders
+     * Uses order ID as cursor (descending order - newest first)
+     */
+    @Query("SELECT o FROM Order o WHERE o.sellerId = :sellerId " +
+           "AND (:cursor IS NULL OR o.id < :cursor) " +
+           "AND (:status IS NULL OR o.orderStatus = :status) " +
+           "ORDER BY o.id DESC")
+    List<Order> findBySellerIdWithCursor(
+        @Param("sellerId") Long sellerId,
+        @Param("cursor") Long cursor,
+        @Param("status") OrderStatus status,
+        org.springframework.data.domain.Pageable pageable);
+    
+    /**
+     * Count total orders for seller (with optional status filter)
+     */
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.sellerId = :sellerId " +
+           "AND (:status IS NULL OR o.orderStatus = :status)")
+    long countBySellerIdAndOptionalStatus(
+        @Param("sellerId") Long sellerId,
+        @Param("status") OrderStatus status);
+
+    /**
+     * Cursor-based pagination for user orders
+     */
+    @Query("SELECT o FROM Order o WHERE o.user.id = :userId " +
+           "AND (:cursor IS NULL OR o.id < :cursor) " +
+           "ORDER BY o.id DESC")
+    List<Order> findByUserIdWithCursor(
+        @Param("userId") Long userId,
+        @Param("cursor") Long cursor,
+        org.springframework.data.domain.Pageable pageable);
+    
+    /**
+     * Count total orders for user
+     */
+    long countByUserId(Long userId);
 }

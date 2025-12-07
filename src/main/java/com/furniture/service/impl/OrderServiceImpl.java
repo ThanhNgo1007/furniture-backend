@@ -204,4 +204,45 @@ public class OrderServiceImpl implements OrderService {
                 new Exception("Order item not found with id "));
     }
 
+    @Override
+    public com.furniture.response.CursorPageResponse<Order> sellersOrderPaginated(
+            Long sellerId, Long cursor, int size, com.furniture.domain.OrderStatus status) {
+        
+        // Fetch one extra to check if there are more
+        org.springframework.data.domain.Pageable pageable = 
+            org.springframework.data.domain.PageRequest.of(0, size + 1);
+        
+        List<Order> orders = orderRepository.findBySellerIdWithCursor(sellerId, cursor, status, pageable);
+        
+        boolean hasMore = orders.size() > size;
+        if (hasMore) {
+            orders = orders.subList(0, size);  // Remove the extra item
+        }
+        
+        Long nextCursor = orders.isEmpty() ? null : orders.getLast().getId();
+        long totalElements = orderRepository.countBySellerIdAndOptionalStatus(sellerId, status);
+        
+        return com.furniture.response.CursorPageResponse.of(orders, nextCursor, hasMore, totalElements);
+    }
+
+    @Override
+    public com.furniture.response.CursorPageResponse<Order> usersOrderHistoryPaginated(
+            Long userId, Long cursor, int size) {
+        
+        org.springframework.data.domain.Pageable pageable = 
+            org.springframework.data.domain.PageRequest.of(0, size + 1);
+        
+        List<Order> orders = orderRepository.findByUserIdWithCursor(userId, cursor, pageable);
+        
+        boolean hasMore = orders.size() > size;
+        if (hasMore) {
+            orders = orders.subList(0, size);
+        }
+        
+        Long nextCursor = orders.isEmpty() ? null : orders.getLast().getId();
+        long totalElements = orderRepository.countByUserId(userId);
+        
+        return com.furniture.response.CursorPageResponse.of(orders, nextCursor, hasMore, totalElements);
+    }
+
 }

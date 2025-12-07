@@ -19,5 +19,12 @@ public interface OrderService {
     Order updateOrderStatus(Long orderId, OrderStatus orderStatus) throws Exception;
     Order cancelOrder(Long orderId, User user) throws Exception;
     OrderItem getOrderItemById(Long id) throws Exception;
+    
+    // Cursor-based pagination methods
+    com.furniture.response.CursorPageResponse<Order> sellersOrderPaginated(
+        Long sellerId, Long cursor, int size, com.furniture.domain.OrderStatus status);
+    
+    com.furniture.response.CursorPageResponse<Order> usersOrderHistoryPaginated(
+        Long userId, Long cursor, int size);
 
 }
