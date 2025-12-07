@@ -1,12 +1,13 @@
 package com.furniture.service;
 
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+
 import com.furniture.exceptions.ProductException;
 import com.furniture.modal.Product;
 import com.furniture.modal.Seller;
 import com.furniture.request.CreateProductRequest;
-import org.springframework.data.domain.Page;
-
-import java.util.List;
 
 public interface ProductService {
 
@@ -27,5 +28,13 @@ public interface ProductService {
             Integer pageNumber
     );
     List<Product> getProductBySellerId(Long sellerId);
+    
+    Product softDeleteProduct(Long productId) throws ProductException;
+    
+    Product markOutOfStock(Long productId) throws ProductException;
+    
+    Product reactivateProduct(Long productId) throws ProductException;
+    
+    List<Product> getInactiveProductsBySellerId(Long sellerId);
 
 }

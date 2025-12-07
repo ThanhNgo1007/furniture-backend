@@ -37,4 +37,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Product p where p.id = :id")
     Optional<Product> findByIdWithLock(@Param("id") Long id);
+    
+    List<Product> findBySellerIdAndIsActive(Long sellerId, boolean isActive);
 }
+

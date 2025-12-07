@@ -4,12 +4,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.furniture.domain.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import com.furniture.modal.Order;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import com.furniture.domain.OrderStatus;
+import com.furniture.modal.Order;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
@@ -70,4 +70,75 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         "WHERE o.sellerId = :sellerId AND o.orderStatus != com.furniture.domain.OrderStatus.PENDING"
     )
     Long countTotalOrdersBySellerId(@Param("sellerId") Long sellerId);
+
+    // ==================== ADMIN DASHBOARD QUERIES ====================
+    
+    /**
+     * Total revenue (all DELIVERED orders)
+     */
+    @Query("SELECT COALESCE(SUM(o.totalSellingPrice), 0) FROM Order o WHERE o.orderStatus = :status")
+    BigDecimal sumTotalRevenueByStatus(@Param("status") OrderStatus status);
+
+    /**
+     * Count orders by status (global)
+     */
+    long countByOrderStatus(OrderStatus status);
+
+    /**
+     * Count orders by date range
+     */
+    long countByOrderDateBetween(LocalDateTime start, LocalDateTime end);
+
+    /**
+     * Sum revenue by date range and status
+     */
+    @Query("SELECT COALESCE(SUM(o.totalSellingPrice), 0) FROM Order o " +
+           "WHERE o.orderDate BETWEEN :start AND :end AND o.orderStatus = :status")
+    BigDecimal sumRevenueByDateRangeAndStatus(
+        @Param("start") LocalDateTime start,
+        @Param("end") LocalDateTime end,
+        @Param("status") OrderStatus status
+    );
+
+    /**
+     * Average order value by status
+     */
+    @Query("SELECT AVG(o.totalSellingPrice) FROM Order o WHERE o.orderStatus = :status")
+    BigDecimal avgOrderValueByStatus(@Param("status") OrderStatus status);
+
+    /**
+     * Find orders by delivery date range and status
+     */
+    List<Order> findByDeliveryDateBetweenAndOrderStatus(
+        LocalDateTime start, LocalDateTime end, OrderStatus status
+    );
+
+    /**
+     * Find orders by order date range (global)
+     */
+    List<Order> findByOrderDateBetween(LocalDateTime start, LocalDateTime end);
+
+    /**
+     * Top sellers by revenue (returns sellerId, sellerName, totalRevenue, orderCount)
+     */
+    @Query("SELECT o.sellerId, s.sellerName, SUM(o.totalSellingPrice), COUNT(o) " +
+           "FROM Order o JOIN Seller s ON o.sellerId = s.id " +
+           "WHERE o.orderStatus = com.furniture.domain.OrderStatus.DELIVERED " +
+           "GROUP BY o.sellerId, s.sellerName " +
+           "ORDER BY SUM(o.totalSellingPrice) DESC " +
+           "LIMIT :limit")
+    List<Object[]> findTopSellersByRevenue(@Param("limit") int limit);
+
+    /**
+     * Count orders by payment method
+     */
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.paymentDetails.paymentMethod = :method")
+    long countByPaymentMethod(@Param("method") com.furniture.domain.PaymentMethod method);
+
+    /**
+     * Sum revenue by payment method
+     */
+    @Query("SELECT COALESCE(SUM(o.totalSellingPrice), 0) FROM Order o " +
+           "WHERE o.paymentDetails.paymentMethod = :method AND o.orderStatus = com.furniture.domain.OrderStatus.DELIVERED")
+    BigDecimal sumRevenueByPaymentMethod(@Param("method") com.furniture.domain.PaymentMethod method);
 }

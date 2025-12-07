@@ -104,7 +104,7 @@ public class AuthServiceImpl implements AuthService {
         VerificationCode verificationCode = verificationCodeRepository.findByEmail(req.getEmail());
 
         if (verificationCode == null || !verificationCode.getOtp().equals(req.getOtp())) {
-            throw new Exception("Mã OTP không đúng. Vui lòng kiểm tra lại.");
+            throw new Exception("Thông tin không chính xác. Vui lòng kiểm tra lại.");
         }
 
         User user = userRepository.findByEmail(req.getEmail());

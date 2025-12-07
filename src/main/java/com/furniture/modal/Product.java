@@ -66,6 +66,8 @@ public class Product {
 
     private LocalDateTime createdAt;
 
+    private boolean isActive = true; // For soft delete
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews = new ArrayList<>();
 

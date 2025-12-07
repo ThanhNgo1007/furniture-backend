@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -73,6 +74,34 @@ public class SellerProductController {
             Product updatedProduct = productService.updateProduct(productId, product);
             return new ResponseEntity<>(updatedProduct, HttpStatus.OK);
     }
-
+    
+    @PatchMapping("/{productId}/soft-delete")
+    public ResponseEntity<Product> softDeleteProduct(@PathVariable Long productId)
+            throws ProductException {
+        Product product = productService.softDeleteProduct(productId);
+        return new ResponseEntity<>(product, HttpStatus.OK);
+    }
+    
+    @PatchMapping("/{productId}/out-of-stock")
+    public ResponseEntity<Product> markOutOfStock(@PathVariable Long productId)
+            throws ProductException {
+        Product product = productService.markOutOfStock(productId);
+        return new ResponseEntity<>(product, HttpStatus.OK);
+    }
+    
+    @PatchMapping("/{productId}/reactivate")
+    public ResponseEntity<Product> reactivateProduct(@PathVariable Long productId)
+            throws ProductException {
+        Product product = productService.reactivateProduct(productId);
+        return new ResponseEntity<>(product, HttpStatus.OK);
+    }
+    
+    @GetMapping("/inactive")
+    public ResponseEntity<List<Product>> getInactiveProducts(
+            @RequestHeader("Authorization") String jwt) throws Exception {
+        Seller seller = sellerService.getSellerProfile(jwt);
+        List<Product> products = productService.getInactiveProductsBySellerId(seller.getId());
+        return new ResponseEntity<>(products, HttpStatus.OK);
+    }
 
 }

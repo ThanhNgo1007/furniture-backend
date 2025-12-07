@@ -139,10 +139,39 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product updateProduct(@NonNull Long productId, @NonNull Product product) throws ProductException {
-        findProductById(productId);
-        product.setId(productId);
-
-        return productRepository.save(product);
+        Product existingProduct = findProductById(productId);
+        
+        // Update only the fields that are provided
+        if (product.getTitle() != null) {
+            existingProduct.setTitle(product.getTitle());
+        }
+        if (product.getDescription() != null) {
+            existingProduct.setDescription(product.getDescription());
+        }
+        if (product.getMsrpPrice() != null) {
+            existingProduct.setMsrpPrice(product.getMsrpPrice());
+        }
+        if (product.getSellingPrice() != null) {
+            existingProduct.setSellingPrice(product.getSellingPrice());
+            // Recalculate discount percentage
+            if (existingProduct.getMsrpPrice() != null) {
+                existingProduct.setDiscountPercent(
+                    calculateDiscountPercentage(existingProduct.getMsrpPrice(), product.getSellingPrice())
+                );
+            }
+        }
+        if (product.getQuantity() >= 0) {
+            existingProduct.setQuantity(product.getQuantity());
+        }
+        if (product.getColor() != null) {
+            existingProduct.setColor(product.getColor());
+        }
+        if (product.getImages() != null && !product.getImages().isEmpty()) {
+            existingProduct.setImages(product.getImages());
+        }
+        // Note: Category update requires special handling if needed
+        
+        return productRepository.save(existingProduct);
     }
 
     @Override
@@ -163,6 +192,9 @@ public class ProductServiceImpl implements ProductService {
 
         Specification<Product> spec = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
+            
+            // Only show active products
+            predicates.add(criteriaBuilder.equal(root.get("isActive"), true));
 
             if (category != null && !category.isEmpty()) {
                 Join<Product, Category> categoryJoin = root.join("category");
@@ -242,6 +274,32 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<Product> getProductBySellerId(Long sellerId) {
-        return productRepository.findBySellerId(sellerId);
+        return productRepository.findBySellerIdAndIsActive(sellerId, true);
+    }
+    
+    @Override
+    public Product softDeleteProduct(Long productId) throws ProductException {
+        Product product = findProductById(productId);
+        product.setActive(false);
+        return productRepository.save(product);
+    }
+    
+    @Override
+    public Product markOutOfStock(Long productId) throws ProductException {
+        Product product = findProductById(productId);
+        product.setQuantity(0);
+        return productRepository.save(product);
+    }
+    
+    @Override
+    public Product reactivateProduct(Long productId) throws ProductException {
+        Product product = findProductById(productId);
+        product.setActive(true);
+        return productRepository.save(product);
+    }
+    
+    @Override
+    public List<Product> getInactiveProductsBySellerId(Long sellerId) {
+        return productRepository.findBySellerIdAndIsActive(sellerId, false);
     }
 }
