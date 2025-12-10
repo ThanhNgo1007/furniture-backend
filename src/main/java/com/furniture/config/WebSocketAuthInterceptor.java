@@ -34,47 +34,62 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
         if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
             System.out.println("[WebSocket Auth] CONNECT frame received");
-            List<String> authHeaders = accessor.getNativeHeader("Authorization");
-
-            System.out.println("[WebSocket Auth] Authorization headers: " + authHeaders);
             
-            if (authHeaders != null && !authHeaders.isEmpty()) {
-                String authHeader = authHeaders.getFirst();
-                System.out.println("[WebSocket Auth] Full Authorization header: " + authHeader);
-                
-                if (!authHeader.startsWith("Bearer ")) {
-                    System.out.println("[WebSocket Auth] ERROR: Authorization header does not start with 'Bearer '");
-                    return null; // Reject connection
-                }
-                
-                String jwt = authHeader.replace("Bearer ", "");
-                System.out.println("[WebSocket Auth] JWT token extracted (first 20 chars): " + 
+            String jwt = null;
+            
+            // Try to get token from query params first (for SockJS compatibility)
+            List<String> tokenParams = accessor.getNativeHeader("token");
+            if (tokenParams != null && !tokenParams.isEmpty()) {
+                jwt = tokenParams.getFirst();
+                System.out.println("[WebSocket Auth] JWT from query param (first 20 chars): " + 
                     (jwt.length() > 20 ? jwt.substring(0, 20) + "..." : jwt));
-                
-                try {
-                    SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-                    Claims claims = Jwts.parserBuilder()
-                            .setSigningKey(key)
-                            .build()
-                            .parseClaimsJws(jwt)
-                            .getBody();
-
-                    // Email is stored in custom "email" claim, not in subject
-                    String email = claims.get("email", String.class);
-
-                    System.out.println("[WebSocket Auth] ✅ JWT valid - User email: " + email);
-                    
-                    // Set user principal (you can extend this to fetch full user details)
-                    accessor.setUser(new UsernamePasswordAuthenticationToken(email, null, List.of()));
-
-                } catch (Exception e) {
-                    System.out.println("[WebSocket Auth] ❌ JWT validation failed: " + e.getMessage());
-                    e.printStackTrace();
-                    return null;
-                }
             } else {
-                System.out.println("[WebSocket Auth] ❌ No Authorization header found in CONNECT frame");
-                return null; // Reject if no auth header
+                // Fallback to Authorization header
+                List<String> authHeaders = accessor.getNativeHeader("Authorization");
+                System.out.println("[WebSocket Auth] Authorization headers: " + authHeaders);
+                
+                if (authHeaders != null && !authHeaders.isEmpty()) {
+                    String authHeader = authHeaders.getFirst();
+                    System.out.println("[WebSocket Auth] Full Authorization header: " + authHeader);
+                    
+                    if (!authHeader.startsWith("Bearer ")) {
+                        System.out.println("[WebSocket Auth] ERROR: Authorization header does not start with 'Bearer '");
+                        return null; // Reject connection
+                    }
+                    
+                    jwt = authHeader.replace("Bearer ", "");
+                    System.out.println("[WebSocket Auth] JWT from header (first 20 chars): " + 
+                        (jwt.length() > 20 ? jwt.substring(0, 20) + "..." : jwt));
+                }
+            }
+            
+            // If no token found, reject connection
+            if (jwt == null || jwt.isEmpty()) {
+                System.out.println("[WebSocket Auth] ❌ No JWT token found in query params or Authorization header");
+                return null;
+            }
+            
+            // Validate JWT
+            try {
+                SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+                Claims claims = Jwts.parserBuilder()
+                        .setSigningKey(key)
+                        .build()
+                        .parseClaimsJws(jwt)
+                        .getBody();
+
+                // Email is stored in custom "email" claim, not in subject
+                String email = claims.get("email", String.class);
+
+                System.out.println("[WebSocket Auth] ✅ JWT valid - User email: " + email);
+                
+                // Set user principal
+                accessor.setUser(new UsernamePasswordAuthenticationToken(email, null, List.of()));
+
+            } catch (Exception e) {
+                System.out.println("[WebSocket Auth] ❌ JWT validation failed: " + e.getMessage());
+                e.printStackTrace();
+                return null;
             }
         }
 
