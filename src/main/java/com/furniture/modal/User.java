@@ -47,6 +47,11 @@ public class User {
     private Set<Address> addresses = new HashSet<>();
 
     @ManyToMany
+    @jakarta.persistence.JoinTable(
+        name = "user_used_coupons",
+        joinColumns = @jakarta.persistence.JoinColumn(name = "user_id"),
+        inverseJoinColumns = @jakarta.persistence.JoinColumn(name = "coupon_id")
+    )
     @JsonIgnore
     private Set<Coupon> usedCoupons = new HashSet<>();
 }

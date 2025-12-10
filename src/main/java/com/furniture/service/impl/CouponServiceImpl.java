@@ -15,6 +15,7 @@ import com.furniture.repository.CouponRepository;
 import com.furniture.repository.UserRepository;
 import com.furniture.service.CouponService;
 
+import jakarta.transaction.Transactional;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -28,65 +29,88 @@ public class CouponServiceImpl implements CouponService {
 
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public Cart applyCoupon(String code, BigDecimal orderValue, User user) throws Exception {
+        // Ensure we are working with a managed user entity
+        User managedUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new Exception("User not found"));
 
         Coupon coupon = couponRepository.findByCode(code);
-
-        Cart cart = cartRepository.findByUserId(user.getId());
+        Cart cart = cartRepository.findByUserId(managedUser.getId());
 
         if (coupon == null) {
             throw new Exception("Invalid coupon code");
         }
-        if(user.getUsedCoupons().contains(coupon)){
+        
+        // Use Native Query to check if coupon is used - Bypass Collection Loading
+        int usedCount = userRepository.countUserUsedCoupon(managedUser.getId(), coupon.getId());
+        if(usedCount > 0){
             throw new Exception("Coupon already used");
         }
-        if (orderValue.compareTo(coupon.getMinimumOrderValue()) <= 0) {
+        
+        if (orderValue.compareTo(coupon.getMinimumOrderValue()) < 0) {
             throw new Exception("Not enough minimum value: " + coupon.getMinimumOrderValue());
         }
-        if(coupon.isActive() && LocalDate.now().isAfter(coupon.getValidityStartDate())
-                && LocalDate.now().isBefore(coupon.getValidityEndDate())){
-            user.getUsedCoupons().add(coupon);
-            userRepository.save(user);
+        
+        LocalDate today = LocalDate.now();
+        boolean isActive = coupon.isActive();
+        boolean isStarted = today.isEqual(coupon.getValidityStartDate()) || today.isAfter(coupon.getValidityStartDate());
+        boolean isNotExpired = today.isEqual(coupon.getValidityEndDate()) || today.isBefore(coupon.getValidityEndDate());
 
-            BigDecimal currentTotal = cart.getTotalSellingPrice(); // Giả sử Cart đã đổi sang BigDecimal
+        if(isActive && isStarted && isNotExpired){
+            // Insert into user_used_coupons via native query
+            userRepository.insertUserUsedCoupon(managedUser.getId(), coupon.getId());
+
+            // Calculate actual total from cart items
+            BigDecimal actualTotal = BigDecimal.ZERO;
+            for (var item : cart.getCartItemsInBag()) {
+                BigDecimal itemTotal = item.getSellingPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+                actualTotal = actualTotal.add(itemTotal);
+            }
+            
             BigDecimal percentage = coupon.getDiscountPercentage();
 
-            BigDecimal discountedPrice = currentTotal.multiply(percentage)
-                    .divide(BigDecimal.valueOf(100));
+            // Calculate discount amount with proper rounding
+            BigDecimal discountAmount = actualTotal.multiply(percentage)
+                    .divide(BigDecimal.valueOf(100), 0, java.math.RoundingMode.HALF_UP);
 
-            // 2. Trừ tiền: Total - DiscountedPrice
-            cart.setTotalSellingPrice(currentTotal.subtract(discountedPrice));
-
+            // Store discount PERCENTAGE for display (NOT amount)
+            cart.setDiscount(percentage.intValue());
+            
+            // Set new total = actual total - discount amount
+            cart.setTotalSellingPrice(actualTotal.subtract(discountAmount));
             cart.setCouponCode(code);
-            cartRepository.save(cart);
-            return cart;
+            
+            return cartRepository.save(cart);
         }
 
         throw new Exception("Invalid coupon code");
     }
 
     @Override
+    @Transactional
     public Cart removeCoupon(String code, User user) throws Exception {
         Coupon coupon = couponRepository.findByCode(code);
 
         if (coupon == null) {
             throw new Exception("Coupon not found ...");
         }
+        
         Cart cart = cartRepository.findByUserId(user.getId());
 
-        BigDecimal currentTotal = cart.getTotalSellingPrice();
-        BigDecimal percentage = coupon.getDiscountPercentage();
+        // Delete from user_used_coupons so user can reapply later
+        userRepository.deleteUserUsedCoupon(user.getId(), coupon.getId());
 
-        // Hệ số còn lại: (100 - percentage) / 100
-        BigDecimal remainingFactor = BigDecimal.valueOf(100).subtract(percentage)
-                .divide(BigDecimal.valueOf(100));
+        // Calculate actual total from cart items (correct value without any coupon discount)
+        BigDecimal actualTotal = BigDecimal.ZERO;
+        for (var item : cart.getCartItemsInBag()) {
+            BigDecimal itemTotal = item.getSellingPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+            actualTotal = actualTotal.add(itemTotal);
+        }
 
-        // Tính lại giá gốc: Price_Sau_Giam / Hệ số
-        // Ví dụ: Giá 80k, Giảm 20% (còn 0.8). Giá gốc = 80 / 0.8 = 100k
-        BigDecimal originalPrice = currentTotal.divide(remainingFactor);
-
-        cart.setTotalSellingPrice(originalPrice);
+        cart.setTotalSellingPrice(actualTotal);
         cart.setCouponCode(null);
+        cart.setDiscount(0); // Reset discount
 
         return cartRepository.save(cart);
     }
@@ -101,6 +125,38 @@ public class CouponServiceImpl implements CouponService {
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public Coupon createCoupon(@NonNull Coupon coupon) {
+        return couponRepository.save(coupon);
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    public Coupon updateCoupon(@NonNull Long id, @NonNull Coupon coupon) throws Exception {
+        Coupon existingCoupon = findCouponById(id);
+        
+        if (coupon.getCode() != null) {
+            existingCoupon.setCode(coupon.getCode());
+        }
+        if (coupon.getDiscountPercentage() != null) {
+            existingCoupon.setDiscountPercentage(coupon.getDiscountPercentage());
+        }
+        if (coupon.getValidityStartDate() != null) {
+            existingCoupon.setValidityStartDate(coupon.getValidityStartDate());
+        }
+        if (coupon.getValidityEndDate() != null) {
+            existingCoupon.setValidityEndDate(coupon.getValidityEndDate());
+        }
+        if (coupon.getMinimumOrderValue() != null) {
+            existingCoupon.setMinimumOrderValue(coupon.getMinimumOrderValue());
+        }
+        
+        return couponRepository.save(existingCoupon);
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    public Coupon toggleCouponActive(@NonNull Long id) throws Exception {
+        Coupon coupon = findCouponById(id);
+        coupon.setActive(!coupon.isActive());
         return couponRepository.save(coupon);
     }
 

@@ -93,8 +93,8 @@ public class CartServiceImpl implements CartService {
         }
 
         // 3. Tính toán lại tổng tiền Cart (Dùng BigDecimal)
-        BigDecimal totalPrice = BigDecimal.ZERO;
-        BigDecimal totalSellingPrice = BigDecimal.ZERO;
+        BigDecimal totalMsrp = BigDecimal.ZERO;
+        BigDecimal totalSelling = BigDecimal.ZERO;
         int totalItem = 0;
 
         for (CartItem cartItem : cart.getCartItemsInBag()) {
@@ -104,14 +104,26 @@ public class CartServiceImpl implements CartService {
             BigDecimal itemMsrp = cartItem.getMsrpPrice() != null ? cartItem.getMsrpPrice() : BigDecimal.ZERO;
             BigDecimal itemSelling = cartItem.getSellingPrice() != null ? cartItem.getSellingPrice() : BigDecimal.ZERO;
 
-            totalPrice = totalPrice.add(itemMsrp);
-            totalSellingPrice = totalSellingPrice.add(itemSelling);
+            totalMsrp = totalMsrp.add(itemMsrp);
+            totalSelling = totalSelling.add(itemSelling);
         }
 
-        cart.setTotalMsrpPrice(totalPrice);
-        cart.setTotalSellingPrice(totalSellingPrice);
+        cart.setTotalMsrpPrice(totalMsrp);
         cart.setTotalItem(totalItem);
-        cart.setDiscount(calculateDiscountPercentage(totalPrice, totalSellingPrice));
+        
+        // CRITICAL FIX: Only update totalSellingPrice and discount if NO coupon is applied
+        // When a coupon is applied, these values are managed by CouponServiceImpl
+        if (cart.getCouponCode() == null || cart.getCouponCode().isEmpty()) {
+            cart.setTotalSellingPrice(totalSelling);
+            cart.setDiscount(calculateDiscountPercentage(totalMsrp, totalSelling));
+        } else {
+            // Coupon is applied - recalculate totalSellingPrice based on items minus coupon
+            int couponDiscountPercent = cart.getDiscount(); // This is the coupon percentage
+            BigDecimal couponAmount = totalSelling.multiply(BigDecimal.valueOf(couponDiscountPercent))
+                    .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+            cart.setTotalSellingPrice(totalSelling.subtract(couponAmount));
+            // Keep cart.discount as is (coupon percentage)
+        }
 
         return cartRepository.save(cart);
     }

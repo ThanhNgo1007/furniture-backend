@@ -167,7 +167,8 @@ public class ProductServiceImpl implements ProductService {
             existingProduct.setColor(product.getColor());
         }
         if (product.getImages() != null && !product.getImages().isEmpty()) {
-            existingProduct.setImages(product.getImages());
+            existingProduct.getImages().clear();
+            existingProduct.getImages().addAll(product.getImages());
         }
         // Note: Category update requires special handling if needed
         

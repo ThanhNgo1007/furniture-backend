@@ -7,12 +7,14 @@ import com.furniture.modal.Address;
 import com.furniture.modal.User;
 
 import lombok.NonNull;
+import org.springframework.data.domain.Page;
 
 public interface UserService {
 
      User findUserByJwtToken(String jwt) throws Exception;
      User findUserByEmail(String email) throws Exception;
      List<User> findAllUsers();
+     Page<User> findAllUsersPaginated(org.springframework.data.domain.Pageable pageable);
      User updateRole(@NonNull Long userId, USER_ROLE role) throws Exception;
      User createAddress(User user, @NonNull Address address) throws Exception;
      User updateAddress(@NonNull Long userId, @NonNull Long addressId, Address address) throws Exception;

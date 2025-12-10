@@ -2,6 +2,8 @@ package com.furniture.service.impl;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.furniture.config.JwtProvider;
@@ -42,6 +44,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> findAllUsers() {
         return userRepository.findAll();
+    }
+
+    @Override
+    public Page<User> findAllUsersPaginated(
+            Pageable pageable) {
+        return userRepository.findAll(pageable);
     }
 
     @Override

@@ -2,6 +2,9 @@ package com.furniture.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -49,6 +52,19 @@ public class AdminController {
         return ResponseEntity.ok(sellers);
     }
 
+    @GetMapping("/sellers/paginated")
+    public ResponseEntity<org.springframework.data.domain.Page<Seller>> getAllSellersPaginated(
+            @RequestParam(required = false) AccountStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        org.springframework.data.domain.Pageable pageable = 
+            org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Page<Seller> sellers = 
+            sellerService.getAllSellersPaginated(status, pageable);
+        return ResponseEntity.ok(sellers);
+    }
+
     @PatchMapping("/sellers/{id}/status")
     public ResponseEntity<Seller> updateSellerAccountStatus(
             @PathVariable Long id,
@@ -58,10 +74,22 @@ public class AdminController {
         return ResponseEntity.ok(updatedSeller);
     }
 
-    // 1. API lấy danh sách tất cả User
+    // 1. API lấy danh sách tất cả User (legacy - no pagination)
     @GetMapping("/users")
     public ResponseEntity<List<User>> getAllUsers(@RequestHeader("Authorization") String jwt) throws Exception {
         List<User> users = userService.findAllUsers();
+        return ResponseEntity.ok(users);
+    }
+
+    // 1b. API lấy danh sách User với pagination
+    @GetMapping("/users/paginated")
+    public ResponseEntity<org.springframework.data.domain.Page<User>> getAllUsersPaginated(
+            @RequestHeader("Authorization") String jwt,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) throws Exception {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<User> users = userService.findAllUsersPaginated(pageable);
         return ResponseEntity.ok(users);
     }
 

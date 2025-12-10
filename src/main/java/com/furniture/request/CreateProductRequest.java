@@ -20,7 +20,7 @@ public class CreateProductRequest {
     private String title;
     
     @NotBlank(message = "Description is required")
-    @Size(min = 10, max = 2000, message = "Description must be between 10 and 65535 characters")
+    @Size(min = 10, max = 65535, message = "Description must be between 10 and 65535 characters")
     private String description;
     
     @NotNull(message = "MSRP price is required")

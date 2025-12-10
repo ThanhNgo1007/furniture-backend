@@ -5,6 +5,8 @@ import java.util.List;
 import com.furniture.domain.AccountStatus;
 import com.furniture.exceptions.SellerException;
 import com.furniture.modal.Seller;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface SellerService {
 
@@ -14,6 +16,8 @@ public interface SellerService {
     Seller getSellerByEmail(String email) throws Exception;
 
     List<Seller> getAllSellers(AccountStatus status);
+    Page<Seller> getAllSellersPaginated(
+        AccountStatus status, Pageable pageable);
 
     Seller updateSeller(Long id, Seller seller) throws Exception;
     void deleteSeller(Long id) throws Exception;

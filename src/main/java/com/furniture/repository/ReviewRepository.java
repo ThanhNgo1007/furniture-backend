@@ -1,12 +1,15 @@
 package com.furniture.repository;
 
-import com.furniture.modal.Review;
+import java.util.List;
+
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
+import com.furniture.modal.Review;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findByProductId(Long productId);
+    Page<Review> findByProductId(Long productId, org.springframework.data.domain.Pageable pageable);
 
 }

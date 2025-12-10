@@ -2,6 +2,7 @@ package com.furniture.service.impl;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -81,6 +82,15 @@ public class SellerServiceImpl implements SellerService {
             return sellerRepository.findAll();
         }
         return sellerRepository.findByAccountStatus(status);
+    }
+
+    @Override
+    public Page<Seller> getAllSellersPaginated(
+            AccountStatus status, org.springframework.data.domain.Pageable pageable) {
+        if (status == null) {
+            return sellerRepository.findAll(pageable);
+        }
+        return sellerRepository.findByAccountStatus(status, pageable);
     }
 
     @Override
