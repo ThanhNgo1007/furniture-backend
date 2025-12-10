@@ -37,20 +37,19 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
             
             String jwt = null;
             
-            // Try to get token from query params first (for SockJS compatibility)
-            List<String> tokenParams = accessor.getNativeHeader("token");
-            if (tokenParams != null && !tokenParams.isEmpty()) {
-                jwt = tokenParams.getFirst();
-                System.out.println("[WebSocket Auth] JWT from query param (first 20 chars): " + 
+            // Try to get token from session attributes (set by HandshakeInterceptor)
+            Object tokenObj = accessor.getSessionAttributes().get("token");
+            if (tokenObj != null) {
+                jwt = tokenObj.toString();
+                System.out.println("[WebSocket Auth] JWT from session attributes (first 20 chars): " + 
                     (jwt.length() > 20 ? jwt.substring(0, 20) + "..." : jwt));
             } else {
-                // Fallback to Authorization header
+                // Fallback to Authorization header (for non-SockJS connections)
                 List<String> authHeaders = accessor.getNativeHeader("Authorization");
-                System.out.println("[WebSocket Auth] Authorization headers: " + authHeaders);
+                System.out.println("[WebSocket Auth] No token in session, trying Authorization headers: " + authHeaders);
                 
                 if (authHeaders != null && !authHeaders.isEmpty()) {
                     String authHeader = authHeaders.getFirst();
-                    System.out.println("[WebSocket Auth] Full Authorization header: " + authHeader);
                     
                     if (!authHeader.startsWith("Bearer ")) {
                         System.out.println("[WebSocket Auth] ERROR: Authorization header does not start with 'Bearer '");
@@ -65,7 +64,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
             
             // If no token found, reject connection
             if (jwt == null || jwt.isEmpty()) {
-                System.out.println("[WebSocket Auth] ❌ No JWT token found in query params or Authorization header");
+                System.out.println("[WebSocket Auth] ❌ No JWT token found");
                 return null;
             }
             
@@ -78,7 +77,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                         .parseClaimsJws(jwt)
                         .getBody();
 
-                // Email is stored in custom "email" claim, not in subject
+                // Email is stored in custom "email" claim
                 String email = claims.get("email", String.class);
 
                 System.out.println("[WebSocket Auth] ✅ JWT valid - User email: " + email);

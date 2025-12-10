@@ -41,6 +41,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     "http://localhost:5173",        // Local Vite dev
                     "http://localhost:3000"         // Local React dev (if any)
                 )
+                .addInterceptors(new WebSocketHandshakeInterceptor()) // Extract token from query params
                 .withSockJS();  // Enable SockJS fallback for browsers that don't support WebSocket
     }
 
