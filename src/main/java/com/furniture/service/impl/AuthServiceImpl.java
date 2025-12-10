@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -47,6 +48,9 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
     private final CustomUserServiceImpl customUserService;
     private final SellerRepository sellerRepository;
+    
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     // AuthServiceImpl.java
 
@@ -186,7 +190,7 @@ public class AuthServiceImpl implements AuthService {
                     verificationCodeRepository.save(vc);
 
                     String subject = "AptDeco Seller Account Verification (Resend)";
-                    String frontend_url = "http://localhost:5173/verify-seller/" + newOtp;
+                    String frontend_url = frontendUrl + "/verify-seller/" + newOtp;
                     String text = "Your account is not verified yet. Please verify using this link: " + frontend_url;
                     emailService.sendVerificationOtpEmail(actualEmail, newOtp, subject, text);
                 } catch (Exception e) {

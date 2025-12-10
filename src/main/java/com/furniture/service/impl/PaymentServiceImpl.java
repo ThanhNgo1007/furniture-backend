@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity; // <-- THÊM IMPORT
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +44,9 @@ public class  PaymentServiceImpl implements PaymentService {
     private final OrderRepository orderRepository;
     private final VNPayConfig vnPayConfig;
     private final ProductRepository productRepository;
+    
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     @Override
     @Transactional
@@ -89,7 +93,7 @@ public class  PaymentServiceImpl implements PaymentService {
                                        String paymentId,
                                        String paymentLinkId,
                                        String vnp_ResponseCode,
-                                       String vnp_TransactionStatus) throws Exception {
+                                       String vnp_TransactionStatus) {
 
         // Kiểm tra nếu đơn hàng đã được xử lý rồi thì bỏ qua
         if (!paymentOrder.getStatus().equals(PaymentOrderStatus.PENDING)) {
@@ -168,7 +172,7 @@ public class  PaymentServiceImpl implements PaymentService {
 
         // Convert amount từ USD sang VND nếu cần
         // VNPay chỉ hỗ trợ VND, nên nếu website dùng USD thì phải convert
-        vnPayConfig.getDefaultCurrency();
+        // Note: Currency conversion logic can be added here if needed
 
         // VNPay yêu cầu amount phải nhân 100 (ví dụ: 1000 VND = 100000)
         long vnpAmount = paymentOrder.getAmount()
@@ -218,15 +222,13 @@ public class  PaymentServiceImpl implements PaymentService {
     @Transactional
     public ResponseEntity<?> vnpayReturn(Map<String, String> params) throws Exception {
         String vnp_SecureHash = params.remove("vnp_SecureHash");
-        if (params.containsKey("vnp_SecureHashType")) {
-            params.remove("vnp_SecureHashType");
-        }
+        params.remove("vnp_SecureHashType");
 
         String hashData = VNPayUtil.getHashData(params);
         String signValue = VNPayUtil.hmacSHA512(vnPayConfig.getSecretKey(), hashData);
 
-        String frontendSuccessUrl = "http://localhost:5173/payment/success";
-        String frontendFailedUrl = "http://localhost:5173/payment/failed";
+        String frontendSuccessUrl = frontendUrl + "/payment/success";
+        String frontendFailedUrl = frontendUrl + "/payment/failed";
 
         if (signValue.equals(vnp_SecureHash)) {
             String vnp_ResponseCode = params.get("vnp_ResponseCode");

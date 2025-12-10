@@ -2,6 +2,7 @@ package com.furniture.controller;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -29,7 +30,6 @@ import com.furniture.service.SellerReportService;
 import com.furniture.service.SellerService;
 import com.furniture.utils.OtpUtil;
 
-import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -41,14 +41,15 @@ public class SellerController {
     private final VerificationCodeRepository verificationCodeRepository;
     private final AuthService authService;
     private final EmailService emailService;
-
     private final SellerReportService sellerReportService;
+    
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> loginSeller(
             @RequestBody LoginRequest req
-
-            ) throws Exception {
+            ) {
 
         String otp = req.getOtp();
         String email = req.getEmail();
@@ -79,7 +80,7 @@ public class SellerController {
 
     @PostMapping
     public ResponseEntity<Seller> createSeller(@RequestBody Seller seller)
-            throws Exception, MessagingException {
+            throws Exception {
 
         // 1. Tạo seller trong DB
         Seller savedSeller = sellerService.createSeller(seller);
@@ -99,7 +100,7 @@ public class SellerController {
         // String link = "<a href=\"" + frontend_url + "\">Verify Account</a>"; // Hoặc gửi raw URL
 
         // Gửi email (Lưu ý: hàm sendVerificationOtpEmail cần hỗ trợ gửi text kèm link)
-        emailService.sendVerificationOtpEmail(savedSeller.getEmail(), otp, subject, text + "http://localhost:5173/verify-seller/" + otp);
+        emailService.sendVerificationOtpEmail(savedSeller.getEmail(), otp, subject, text + frontendUrl + "/verify-seller/" + otp);
 
         return new ResponseEntity<>(savedSeller, HttpStatus.CREATED);
     }
