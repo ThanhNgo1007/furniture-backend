@@ -1,7 +1,6 @@
 package com.furniture.service.impl;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -61,21 +60,40 @@ public class OrderServiceImpl implements OrderService {
         Map<Long, List<CartItem>> itemsBySeller = cart.getCartItemsInBag().stream()
                 .collect(Collectors.groupingBy(item->item.getProduct().getSeller().getId()));
         Set<Order> orders = new HashSet<>();
+        
+        // Get coupon discount percentage from cart (if any)
+        int couponDiscountPercent = cart.getDiscount(); // This is percentage (e.g., 10 for 10%)
 
         for(Map.Entry<Long, List<CartItem>> entry : itemsBySeller.entrySet()) {
             Long sellerId = entry.getKey();
             List<CartItem> items = entry.getValue();
 
-            BigDecimal totalOrderPrice = items.stream()
-                    .map(CartItem::getSellingPrice)
+            // Fix: Calculate total MSRP price (multiply by quantity)
+            BigDecimal totalMsrpPrice = items.stream()
+                    .map(item -> item.getMsrpPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            // Fix: Calculate total selling price (multiply by quantity)
+            BigDecimal totalSellingPrice = items.stream()
+                    .map(item -> item.getSellingPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            
+            // Apply coupon discount if exists
+            if (couponDiscountPercent > 0) {
+                BigDecimal discountAmount = totalSellingPrice
+                        .multiply(BigDecimal.valueOf(couponDiscountPercent))
+                        .divide(BigDecimal.valueOf(100), 0, java.math.RoundingMode.HALF_UP);
+                totalSellingPrice = totalSellingPrice.subtract(discountAmount);
+            }
+            
             int totalItem = items.stream().mapToInt(CartItem::getQuantity).sum();
 
             Order createdOrder = new Order();
             createdOrder.setUser(user);
             createdOrder.setSellerId(sellerId);
-            createdOrder.setTotalMsrpPrice(totalOrderPrice);
-            createdOrder.setTotalSellingPrice(totalOrderPrice);
+            createdOrder.setTotalMsrpPrice(totalMsrpPrice);
+            createdOrder.setTotalSellingPrice(totalSellingPrice); // Now includes coupon discount
+            createdOrder.setDiscount(couponDiscountPercent); // Store coupon discount percentage
             createdOrder.setTotalItem(totalItem);
             createdOrder.setShippingAddress(address);
             createdOrder.setOrderStatus(OrderStatus.PENDING);
@@ -89,8 +107,6 @@ public class OrderServiceImpl implements OrderService {
             Order savedOrder = orderRepository.save(createdOrder);
             orders.add(savedOrder);
 
-            List<OrderItem> orderItems = new ArrayList<>();
-
             for(CartItem cartItem : items) {
                 OrderItem orderItem = new OrderItem();
                 orderItem.setOrder(savedOrder);
@@ -102,10 +118,7 @@ public class OrderServiceImpl implements OrderService {
 
                 savedOrder.getOrderItems().add(orderItem);
 
-                OrderItem savedOrderItem = orderItemRepository.save(orderItem);
-
-
-                orderItems.add(savedOrderItem);
+                orderItemRepository.save(orderItem);
             }
 
         }
