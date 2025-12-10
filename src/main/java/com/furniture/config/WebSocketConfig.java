@@ -1,6 +1,7 @@
 package com.furniture.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.lang.NonNull;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -15,6 +16,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Autowired
     private WebSocketAuthInterceptor webSocketAuthInterceptor;
+    
+    @Value("${frontend.url:http://localhost:5173}")
+    private String frontendUrl;
 
     @Override
     public void configureMessageBroker(@NonNull MessageBrokerRegistry config) {
@@ -32,7 +36,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
         // Register WebSocket endpoint with SockJS fallback
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")  // Configure CORS for development
+                .setAllowedOrigins(
+                    frontendUrl,                    // Production frontend
+                    "http://localhost:5173",        // Local Vite dev
+                    "http://localhost:3000"         // Local React dev (if any)
+                )
                 .withSockJS();  // Enable SockJS fallback for browsers that don't support WebSocket
     }
 

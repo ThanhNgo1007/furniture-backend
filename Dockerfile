@@ -15,6 +15,13 @@ RUN ./mvnw clean package -DskipTests -B
 
 # Run stage - use slim JRE image
 FROM eclipse-temurin:21-jre-alpine
+
+# Set timezone to Vietnam (UTC+7)
+ENV TZ=Asia/Ho_Chi_Minh
+RUN apk add --no-cache tzdata && \
+    cp /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone
+
 WORKDIR /app
 
 # Create non-root user for security

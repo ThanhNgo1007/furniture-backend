@@ -35,7 +35,9 @@ import com.furniture.utils.VNPayUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class  PaymentServiceImpl implements PaymentService {
@@ -192,12 +194,12 @@ public class  PaymentServiceImpl implements PaymentService {
         vnp_Params.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());
         vnp_Params.put("vnp_IpAddr", VNPayUtil.getIpAddress(request)); // IP bắt buộc
 
-        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
         String vnp_CreateDate = formatter.format(cld.getTime());
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
 
-        cld.add(Calendar.MINUTE, 15);
+        cld.add(Calendar.MINUTE, 30); // Tăng từ 15 lên 30 phút
         String vnp_ExpireDate = formatter.format(cld.getTime());
         vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
 
@@ -220,7 +222,9 @@ public class  PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional
-    public ResponseEntity<?> vnpayReturn(Map<String, String> params) throws Exception {
+    public ResponseEntity<?> vnpayReturn(Map<String, String> params) {
+        log.info("VNPay return callback received with params: {}", params);
+        
         String vnp_SecureHash = params.remove("vnp_SecureHash");
         params.remove("vnp_SecureHashType");
 
@@ -229,14 +233,20 @@ public class  PaymentServiceImpl implements PaymentService {
 
         String frontendSuccessUrl = frontendUrl + "/payment/success";
         String frontendFailedUrl = frontendUrl + "/payment/failed";
+        
+        log.info("Verifying signature. Expected: {}, Actual: {}", signValue, vnp_SecureHash);
 
         if (signValue.equals(vnp_SecureHash)) {
             String vnp_ResponseCode = params.get("vnp_ResponseCode");
             String vnp_TransactionStatus = params.get("vnp_TransactionStatus");
             String vnp_TxnRef = params.get("vnp_TxnRef");
+            
+            log.info("Payment callback - TxnRef: {}, ResponseCode: {}, TransactionStatus: {}", 
+                     vnp_TxnRef, vnp_ResponseCode, vnp_TransactionStatus);
 
             // ===== THANH TOÁN THÀNH CÔNG =====
             if ("00".equals(vnp_ResponseCode)) {
+                log.info("Payment SUCCESS for TxnRef: {}", vnp_TxnRef);
                 PaymentOrder paymentOrder = paymentOrderRepository.findByPaymentLinkId(vnp_TxnRef);
                 if (paymentOrder != null) {
                     proceedPaymentOrder(
@@ -258,6 +268,7 @@ public class  PaymentServiceImpl implements PaymentService {
 
             // ===== THANH TOÁN THẤT BẠI / HỦY =====
             else {
+                log.warn("Payment FAILED/CANCELLED for TxnRef: {}, ResponseCode: {}", vnp_TxnRef, vnp_ResponseCode);
                 PaymentOrder paymentOrder = paymentOrderRepository.findByPaymentLinkId(vnp_TxnRef);
                 if (paymentOrder != null) {
                     proceedPaymentOrder(
@@ -280,6 +291,7 @@ public class  PaymentServiceImpl implements PaymentService {
                         .build();
             }
         } else {
+            log.error("VNPay signature verification FAILED!");
             return ResponseEntity.status(302)
                     .header("Location", frontendFailedUrl + "?error=checksum_failed")
                     .build();
