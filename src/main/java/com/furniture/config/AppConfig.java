@@ -84,11 +84,12 @@ public class AppConfig {
         return request -> {
             CorsConfiguration cfg = new CorsConfiguration();
 
-            // Allowed origins
+            // Allowed origins - localhost for dev, production domains
             cfg.setAllowedOrigins(Arrays.asList(
                     "http://localhost:3000",
                     "http://localhost:5173",
-                    "http://localhost:4000"
+                    "http://localhost:4000",
+                    "https://furniture-frontend.nhthanh1007.workers.dev"
             ));
 
             // Allowed methods
