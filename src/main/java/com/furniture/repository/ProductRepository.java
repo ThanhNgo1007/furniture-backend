@@ -1,6 +1,8 @@
 package com.furniture.repository;
 
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -35,7 +37,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from Product p where p.id = :id")
-    //Optional<Product> findByIdWithLock(@Param("id") Long id);
+    Optional<Product> findByIdWithLock(@Param("id") Long id);
     
     List<Product> findBySellerIdAndIsActive(Long sellerId, boolean isActive);
     
