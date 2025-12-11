@@ -165,6 +165,17 @@ public class ChatService {
         
         Conversation conversation = findConversationById(conversationId);
         
+        // Check if there are any unread messages first
+        int unreadCount = "USER".equals(readerType) ? 
+            conversation.getUnreadCountUser() : 
+            conversation.getUnreadCountSeller();
+        
+        // Only proceed if there are unread messages
+        if (unreadCount == 0) {
+            System.out.println("[Chat] No unread messages to mark, skipping broadcast");
+            return;
+        }
+        
         // Reset unread count
         if ("USER".equals(readerType)) {
             conversation.setUnreadCountUser(0);
@@ -174,7 +185,6 @@ public class ChatService {
         conversationRepository.save(conversation);
         
         // Mark messages as read in DB - marks messages from the OTHER party as read
-        // e.g., when SELLER reads, mark USER's messages as read (senderType != "SELLER")
         messageRepository.markAllAsRead(conversationId, readerType);
         System.out.println("[Chat] Messages marked as read in DB for senderType != " + readerType);
         
