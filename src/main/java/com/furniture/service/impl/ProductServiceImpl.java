@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,7 +25,6 @@ import com.furniture.request.CreateProductRequest;
 import com.furniture.service.ProductService;
 
 import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.Predicate;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -302,5 +302,32 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<Product> getInactiveProductsBySellerId(Long sellerId) {
         return productRepository.findBySellerIdAndIsActive(sellerId, false);
+    }
+    
+    @Override
+    public List<Product> getBestSellerProducts(int limit) {
+        // Query returns Object[] with [Product, totalSold]
+        List<Object[]> results = productRepository.findBestSellerProducts(PageRequest.of(0, limit));
+        
+        // Extract only Product from results
+        return results.stream()
+                .map(row -> (Product) row[0])
+                .toList();
+    }
+    
+    @Override
+    public List<Product> getSimilarProducts(Long productId, int limit) throws ProductException {
+        Product product = findProductById(productId);
+        
+        // Get products with the same category (level 3)
+        if (product.getCategory() == null) {
+            return List.of();
+        }
+        
+        return productRepository.findSimilarProducts(
+                product.getCategory().getId(),
+                productId,
+                PageRequest.of(0, limit)
+        );
     }
 }

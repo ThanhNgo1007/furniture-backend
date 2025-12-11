@@ -11,12 +11,12 @@ import com.furniture.request.CreateProductRequest;
 
 public interface ProductService {
 
-    public Product createProduct(CreateProductRequest req, Seller seller);
-    public void deleteProduct(Long productId) throws ProductException;
-    public Product updateProduct(Long productId, Product product) throws ProductException;
+    Product createProduct(CreateProductRequest req, Seller seller);
+    void deleteProduct(Long productId) throws ProductException;
+    Product updateProduct(Long productId, Product product) throws ProductException;
     Product findProductById(Long productId) throws ProductException;
     List<Product> searchProducts(String query);
-    public Page<Product> getAllProducts(
+    Page<Product> getAllProducts(
             String category,
             String brand,
             String colors,
@@ -36,5 +36,15 @@ public interface ProductService {
     Product reactivateProduct(Long productId) throws ProductException;
     
     List<Product> getInactiveProductsBySellerId(Long sellerId);
+    
+    /**
+     * Get best seller products by sales volume
+     */
+    List<Product> getBestSellerProducts(int limit);
+    
+    /**
+     * Get similar products (same category level 3)
+     */
+    List<Product> getSimilarProducts(Long productId, int limit) throws ProductException;
 
 }

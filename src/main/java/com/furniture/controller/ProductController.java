@@ -62,4 +62,25 @@ public class ProductController {
                 productService.getAllProducts(category, brand,
                         color, minPrice, maxPrice, minDiscount, sort, stock, pageNumber), HttpStatus.OK);
     }
+    
+    /**
+     * Get best seller products (sorted by total quantity sold)
+     */
+    @GetMapping("/best-sellers")
+    public ResponseEntity<List<Product>> getBestSellerProducts(
+            @RequestParam(defaultValue = "10") int limit) {
+        List<Product> products = productService.getBestSellerProducts(limit);
+        return new ResponseEntity<>(products, HttpStatus.OK);
+    }
+    
+    /**
+     * Get similar products (same category level 3)
+     */
+    @GetMapping("/{productId}/similar")
+    public ResponseEntity<List<Product>> getSimilarProducts(
+            @PathVariable Long productId,
+            @RequestParam(defaultValue = "8") int limit) throws ProductException {
+        List<Product> products = productService.getSimilarProducts(productId, limit);
+        return new ResponseEntity<>(products, HttpStatus.OK);
+    }
 }
