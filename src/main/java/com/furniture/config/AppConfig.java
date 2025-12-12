@@ -1,7 +1,7 @@
 package com.furniture.config;
 
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +18,7 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -73,35 +75,41 @@ public class AppConfig {
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(new JwtTokenValidator(secretKey), BasicAuthenticationFilter.class)
-                .csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()));
 
         return http.build();
     }
 
-    // CORS Configuration
-    private CorsConfigurationSource corsConfigurationSource() {
-        return request -> {
-            CorsConfiguration cfg = new CorsConfiguration();
+    // CORS_ALLOWED_ORIGINS: comma-separated list of allowed origins
+    // Example: http://localhost:5173,https://furniture-frontend.pages.dev
+    @Value("${cors.allowed-origins:http://localhost:5173,http://localhost:3000,https://furniture-frontend.nhthanh1007.workers.dev}")
+    private String allowedOrigins;
 
-            // Allowed origins - allow all for production debugging
-            cfg.setAllowedOriginPatterns(Arrays.asList("*"));
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration cfg = new CorsConfiguration();
 
-            // Allowed methods
-            cfg.setAllowedMethods(Collections.singletonList("*"));
+        // Allowed origins - parse from environment variable
+        String[] origins = allowedOrigins.split(",");
+        cfg.setAllowedOrigins(Arrays.asList(origins));
 
-            // Credentials
-            cfg.setAllowCredentials(true);
+        // Allowed methods
+        cfg.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
-            // Headers
-            cfg.setAllowedHeaders(Collections.singletonList("*"));
-            cfg.setExposedHeaders(Arrays.asList("Authorization"));
+        // Credentials
+        cfg.setAllowCredentials(true);
 
-            // Max age
-            cfg.setMaxAge(3600L);
+        // Headers
+        cfg.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
+        cfg.setExposedHeaders(List.of("Authorization"));
 
-            return cfg;
-        };
+        // Max age (1 hour)
+        cfg.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", cfg);
+        return source;
     }
 
     @Bean
