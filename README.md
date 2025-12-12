@@ -3,7 +3,7 @@
 [![Deploy on Railway](https://railway.app/button.svg)](https://furniture-backend-production-33d2.up.railway.app)
 > **Live Demo API**: [https://furniture-backend-production-33d2.up.railway.app](https://furniture-backend-production-33d2.up.railway.app)
 
-Chào mừng bạn đến với backend của hệ thống thương mại điện tử nội thất (Furniture E-commerce). Dự án này được xây dựng mạnh mẽ bằng **Java Spring Boot**, cung cấp đầy đủ các API RESTful và chức năng Real-time WebSocket để phục vụ cho một nền tảng mua sắm trực tuyến hiện đại, đa người dùng (Khách hàng, Người bán, Quản trị viên).
+Chào mừng bạn đến với backend của hệ thống thương mại điện tử nội thất (Furniture Multi-vendor E-commerce). Dự án này được xây dựng mạnh mẽ bằng **Java Spring Boot**, cung cấp đầy đủ các API RESTful và chức năng Real-time WebSocket để phục vụ cho một nền tảng mua sắm trực tuyến hiện đại, đa người dùng (Khách hàng, Người bán, Quản trị viên).
 
 ## 🚀 Tính năng nổi bật
 
@@ -45,12 +45,12 @@ Chào mừng bạn đến với backend của hệ thống thương mại điệ
 
 *   **Ngôn ngữ chính**: Java 21
 *   **Framework**: Spring Boot 3.x (Spring Web, Spring Security, Spring Data JPA)
-*   **Database**: MySQL (tương thích AWS RDS hoặc Local)
+*   **Database**: MySQL
 *   **Real-time Communication**: Spring WebSocket (STOMP protocol)
 *   **Build Tool**: Maven
 *   **Cloud Storage**: Cloudinary (lưu trữ ảnh)
 *   **Payment**: VNPay API
-*   **Deploy**: Docker, Railway (hoặc bất kỳ nền tảng hỗ trợ Java/Docker nào)
+*   **Deploy**: Docker, Railway
 
 ---
 
@@ -159,21 +159,4 @@ Dưới đây là các nhóm API chính (Prefix `/api`):
 
 ---
 
-## 🤝 Đóng góp (Contributing)
-
-Mọi đóng góp đều được hoan nghênh! Nếu bạn muốn cải thiện dự án:
-1.  Fork dự án
-2.  Tạo branch tính năng mới (`git checkout -b feature/NewFeature`)
-3.  Commit thay đổi (`git commit -m 'Add new feature'`)
-4.  Push lên branch (`git push origin feature/NewFeature`)
-5.  Tạo Pull Request
-
----
-
-## 📄 License
-
-Dự án này là mã nguồn mở và được sử dụng cho mục đích học tập/nghiên cứu.
-
----
-
-**Phát triển bởi [Thanh Ngo](https://github.com/ThanhNgo1007)**
+**Phát triển bởi [Ngo Huu Thanh](https://github.com/ThanhNgo1007)**
